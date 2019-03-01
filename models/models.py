@@ -2,14 +2,36 @@
 
 from odoo import models, fields, api
 
-# class odooarena(models.Model):
-#     _name = 'odooarena.odooarena'
 
-#     name = fields.Char()
-#     value = fields.Integer()
-#     value2 = fields.Float(compute="_value_pc", store=True)
-#     description = fields.Text()
-#
-#     @api.depends('value')
-#     def _value_pc(self):
-#         self.value2 = float(self.value) / 100
+class odooarena_character(models.Model):
+    _name = 'odooarena.character'
+    _description = 'basic class to hold character info'
+
+    name = fields.Char("Character Name")
+    maxhp = fields.Integer("Max Health Points", default=100)
+    currenthp = fields.Integer("Current Health Points", default=100)
+    mindamage = fields.Integer("Minimum Damage", default=8)
+    maxdamage = fields.Integer("Max Damage", default=12)
+    image = fields.Binary("Image")
+
+
+class odooarena_player(models.Model):
+    _name = 'odooarena.player'
+    _inherit = 'odooarena.character'
+
+
+class odooarena_fighter(models.Model):
+    _name = 'odooarena.fighter'
+    _inherit = 'odooarena.character'
+
+    alive = fields.Boolean("Alive", default=True)
+    bio = fields.Text("Fighter Background")
+
+
+class odooarena_arena(models.Model):
+    _name = 'odooarena.arena'
+    _description = 'main class where the battle happens'
+
+    combat_log = fields.Text("Combat Log")
+
+

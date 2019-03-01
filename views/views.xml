@@ -1,60 +1,58 @@
 <odoo>
-  <data>
-    <!-- explicit list view definition -->
-    <!--
-    <record model="ir.ui.view" id="odooarena.list">
-      <field name="name">odooarena list</field>
-      <field name="model">odooarena.odooarena</field>
-      <field name="arch" type="xml">
-        <tree>
-          <field name="name"/>
-          <field name="value"/>
-          <field name="value2"/>
-        </tree>
-      </field>
-    </record>
-    -->
+    <data>
+        <record model="ir.ui.view" id="fighter_form_view">
+            <field name="name">Fighter Status</field>
+            <field name="model">odooarena.fighter</field>
+            <field name="arch" type="xml">
+                <form string="Character Screen">
+                    <div id="container" style="width:100%;">
+                        <div id="left" style="float:left; width:30%;">
+                            <field name='image' widget="image" options='{"size": [480, 668]}' class="oe_inline"/>
+                        </div>
+                        <div id="right" style="float:right; width:70%;">
+                            <group colspan="4">
+                                <group colspan="2" col="2">
+                                    <separator string="Character Info" colspan="2"/>
+                                    <field name="name"/>
+                                    <field name="bio"/>
+                                </group>
 
-    <!-- actions opening views on models -->
-    <!--
-    <record model="ir.actions.act_window" id="odooarena.action_window">
-      <field name="name">odooarena window</field>
-      <field name="res_model">odooarena.odooarena</field>
-      <field name="view_mode">tree,form</field>
-    </record>
-    -->
+                                <group colspan="2" col="2">
+                                    <separator string="Character Status" colspan="2"/>
+                                    <field name="alive"/>
+                                    <field name="maxhp"/>
+                                    <field name="mindamage"/>
+                                    <field name="maxdamage"/>
+                                </group>
+                            </group>
+                        </div>
+                    </div>
+                </form>
+            </field>
+        </record>
 
-    <!-- server action to the one above -->
-    <!--
-    <record model="ir.actions.server" id="odooarena.action_server">
-      <field name="name">odooarena server</field>
-      <field name="model_id" ref="model_odooarena_odooarena"/>
-      <field name="state">code</field>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": self._name,
-        }
-      </field>
-    </record>
-    -->
+        <record model="ir.actions.act_window" id="odooarena.action_fighters">
+          <field name="name">Odoo Arena Fighters</field>
+          <field name="res_model">odooarena.fighter</field>
+          <field name="view_mode">tree,form</field>
+        </record>
 
-    <!-- Top menu item -->
-    <!--
-    <menuitem name="odooarena" id="odooarena.menu_root"/>
-    -->
-    <!-- menu categories -->
-    <!--
-    <menuitem name="Menu 1" id="odooarena.menu_1" parent="odooarena.menu_root"/>
-    <menuitem name="Menu 2" id="odooarena.menu_2" parent="odooarena.menu_root"/>
-    -->
-    <!-- actions -->
-    <!--
-    <menuitem name="List" id="odooarena.menu_1_list" parent="odooarena.menu_1"
-              action="odooarena.action_window"/>
-    <menuitem name="Server to list" id="odooarena" parent="odooarena.menu_2"
-              action="odooarena.action_server"/>
-    -->
-  </data>
+
+
+
+        <!-- Top menu item -->
+
+        <menuitem name="Odoo Arena" id="odooarena.menu_root"/>
+
+        <!-- menu categories -->
+
+        <menuitem name="Game" id="odooarena.menu_1" parent="odooarena.menu_root"/>
+
+        <!-- actions -->
+
+        <menuitem name="Fighters" id="odooarena.menu_1_fighters" parent="odooarena.menu_1"
+                  action="odooarena.action_fighters"/>
+
+
+    </data>
 </odoo>
