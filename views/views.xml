@@ -1,5 +1,24 @@
 <odoo>
     <data>
+
+        <record model="ir.actions.act_window" id="odooarena.action_fighters">
+            <field name="name">Odoo Arena Fighters</field>
+            <field name="res_model">odooarena.fighter</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="odooarena.action_arena">
+            <field name="name">Odoo Arena</field>
+            <field name="res_model">odooarena.arena</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <h1>Welcome to the Arena!</h1>
+                <p class="oe_view_nocontent_smiling_face">Please click the button to start the fight</p>
+
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="fighter_form_view">
             <field name="name">Fighter Status</field>
             <field name="model">odooarena.fighter</field>
@@ -29,6 +48,10 @@
                             </group>
                         </div>
                     </div>
+                    <footer>
+                        <button type="action" name="%(odooarena.action_arena)d" string="start the fight"
+                                attrs="{'invisible': [('fighting', '=', False)]}" class="oe_highlight"/>
+                    </footer>
                 </form>
             </field>
         </record>
@@ -48,11 +71,7 @@
 
 
 
-        <record model="ir.actions.act_window" id="odooarena.action_fighters">
-          <field name="name">Odoo Arena Fighters</field>
-          <field name="res_model">odooarena.fighter</field>
-          <field name="view_mode">tree,form</field>
-        </record>
+
 
 
 
@@ -69,6 +88,9 @@
 
         <menuitem name="Fighters" id="odooarena.menu_1_fighters" parent="odooarena.menu_1"
                   action="odooarena.action_fighters"/>
+
+        <menuitem name="Arena" id="odooarena.menu_1_arena" parent="odooarena.menu_1"
+                  action="odooarena.action_arena"/>
 
 
     </data>
