@@ -47,5 +47,6 @@ class odooarena_arena(models.Model):
         self.fighter_image = fighter.image
         self.started = True
 
-
+        self.write({'fighter_name': self.fighter_name, 'fighter_hp': self.fighter_hp,
+                    'fighter_image': self.fighter_image, 'started': self.started})
 

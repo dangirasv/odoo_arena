@@ -10,17 +10,10 @@
         <record model="ir.actions.act_window" id="odooarena.action_arena">
             <field name="name">Odoo Arena</field>
             <field name="res_model">odooarena.arena</field>
-            <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="help" type="html">
                 <h1>Welcome to the Arena!</h1>
                 <p class="oe_view_nocontent_smiling_face">Please click the button to start the fight</p>
-                <p>
-                <button type="object" name="prepare_fight" string="Fight!"/>
-                test</p>
-                <footer>
-
-                </footer>
             </field>
         </record>
 
@@ -111,7 +104,17 @@
             </field>
         </record>
 
-
+        <record model="ir.ui.view" id="arena_tree_view">
+            <field name="name">Active Fights List</field>
+            <field name="model">odooarena.arena</field>
+            <field name="arch" type="xml">
+                <tree string="Active Fights List">
+                    <field name="fighter_name"/>
+                    <field name="fighter_hp"/>
+                    <field name="started"/>
+                </tree>
+            </field>
+        </record>
 
 
 
