@@ -15,7 +15,12 @@
             <field name="help" type="html">
                 <h1>Welcome to the Arena!</h1>
                 <p class="oe_view_nocontent_smiling_face">Please click the button to start the fight</p>
+                <p>
+                <button type="object" name="prepare_fight" string="Fight!"/>
+                test</p>
+                <footer>
 
+                </footer>
             </field>
         </record>
 
@@ -70,7 +75,41 @@
         </record>
 
 
+        <record model="ir.ui.view" id="arena_form_view">
+            <field name="name">Arena</field>
+            <field name="model">odooarena.arena</field>
+            <field name="arch" type="xml">
+                <form string="Arena">
+                    <div id="container" style="width:100%;">
+                        <div id="left" style="float:left; width:35%;">
+                            <field name='fighter_image' widget="image" options='{"size": [400, 550]}' class="oe_right"
+                                   attrs="{'invisible': [('started', '=', False)]}"/>
+                        </div>
+                        <div id="right" style="float:right; width:65%;">
+                            <group colspan="4">
+                                <group colspan="2" col="2">
+                                    <separator string="Character Info" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
+                                    <field name="fighter_name" attrs="{'invisible': [('started', '=', False)]}"/>
+                                </group>
 
+                                <group colspan="2" col="2">
+                                    <separator string="Character Status" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
+                                    <field name="started" invisible="1"/>
+                                    <field name="fighter_hp" widget="progressbar" attrs="{'invisible': [('started', '=', False)]}"/>
+                                    <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
+                                </group>
+                            </group>
+                        </div>
+                    </div>
+                    <footer>
+
+                        <button type="object" name="prepare_fight" string="Start the fight"
+                                attrs="{'invisible': [('started', '=', True)]}" class="oe_highlight"/>
+
+                    </footer>
+                </form>
+            </field>
+        </record>
 
 
 

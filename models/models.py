@@ -38,12 +38,14 @@ class odooarena_arena(models.Model):
     fighter_name = fields.Char("Fighter Name")
     fighter_hp = fields.Integer("Fighter Health Points", default=100)
     fighter_image = fields.Binary("Fighter Image")
+    started = fields.Boolean("Has combat started?", default=False)
 
     def prepare_fight(self):
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         self.fighter_name = fighter.name
         self.fighter_hp = fighter.maxhp
         self.fighter_image = fighter.image
+        self.started = True
 
 
 
