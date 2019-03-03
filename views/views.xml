@@ -6,10 +6,10 @@
             <field name="arch" type="xml">
                 <form string="Character Screen">
                     <div id="container" style="width:100%;">
-                        <div id="left" style="float:left; width:30%;">
-                            <field name='image' widget="image" options='{"size": [480, 668]}' class="oe_inline"/>
+                        <div id="left" style="float:left; width:35%;">
+                            <field name='image' widget="image" options='{"size": [400, 550]}' class="oe_right"/>
                         </div>
-                        <div id="right" style="float:right; width:70%;">
+                        <div id="right" style="float:right; width:65%;">
                             <group colspan="4">
                                 <group colspan="2" col="2">
                                     <separator string="Character Info" colspan="2"/>
@@ -20,6 +20,8 @@
                                 <group colspan="2" col="2">
                                     <separator string="Character Status" colspan="2"/>
                                     <field name="alive"/>
+                                    <field name="fighting"/>
+                                    <field name="level"/>
                                     <field name="maxhp"/>
                                     <field name="mindamage"/>
                                     <field name="maxdamage"/>
@@ -30,6 +32,21 @@
                 </form>
             </field>
         </record>
+
+        <record model="ir.ui.view" id="fighter_tree_view">
+            <field name="name">Fighter List</field>
+            <field name="model">odooarena.fighter</field>
+            <field name="arch" type="xml">
+                <tree string="Fighter List">
+                    <field name="name"/>
+                    <field name="level"/>
+                    <field name="maxhp"/>
+                    <field name="alive"/>
+                </tree>
+            </field>
+        </record>
+
+
 
         <record model="ir.actions.act_window" id="odooarena.action_fighters">
           <field name="name">Odoo Arena Fighters</field>

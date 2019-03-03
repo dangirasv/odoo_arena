@@ -13,6 +13,7 @@ class odooarena_character(models.Model):
     mindamage = fields.Integer("Minimum Damage", default=8)
     maxdamage = fields.Integer("Max Damage", default=12)
     image = fields.Binary("Image")
+    level = fields.Integer("Character Level")
 
 
 class odooarena_player(models.Model):
@@ -25,6 +26,7 @@ class odooarena_fighter(models.Model):
     _inherit = 'odooarena.character'
 
     alive = fields.Boolean("Alive", default=True)
+    fighting = fields.Boolean("Active Fighter", default=False)
     bio = fields.Text("Fighter Background")
 
 
@@ -33,5 +35,13 @@ class odooarena_arena(models.Model):
     _description = 'main class where the battle happens'
 
     combat_log = fields.Text("Combat Log")
+    fighter_hp = fields.Integer("Fighter Health Points", default=100)
+    fighter_image = fields.Binary("Fighter Image")
+
+    def prepare_fight(self):
+        fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
+        self.fighter_hp = fighter.maxhp
+        self.fighter_image = fighter.image
+
 
 
