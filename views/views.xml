@@ -1,6 +1,15 @@
 <odoo>
     <data>
 
+        <record model="ir.actions.act_window" id="odooarena.action_player">
+            <field name="name">Odoo Arena</field>
+            <field name="res_model">odooarena.player</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_smiling_face">Please click the "Create" button to create your character</p>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="odooarena.action_fighters">
             <field name="name">Odoo Arena Fighters</field>
             <field name="res_model">odooarena.fighter</field>
@@ -14,6 +23,51 @@
             <field name="help" type="html">
                 <h1>Welcome to the Arena!</h1>
                 <p class="oe_view_nocontent_smiling_face">Please click the button to start the fight</p>
+            </field>
+        </record>
+
+
+
+
+        <record model="ir.ui.view" id="player_form_view">
+            <field name="name">Player Status</field>
+            <field name="model">odooarena.player</field>
+            <field name="arch" type="xml">
+                <form string="Player Character Screen">
+                    <div id="container" style="width:100%;">
+                        <div id="left" style="float:left; width:35%;">
+                            <field name='image' widget="image" options='{"size": [400, 550]}' class="oe_right"/>
+                        </div>
+                        <div id="right" style="float:right; width:65%;">
+                            <group colspan="4">
+                                <group colspan="2" col="2">
+                                    <separator string="Player Character Info" colspan="2"/>
+                                    <field name="name"/>
+                                </group>
+
+                                <group colspan="2" col="2">
+                                    <separator string="Character Status" colspan="2"/>
+                                    <field name="level" readonly="True"/>
+                                    <field name="maxhp" readonly="True"/>
+                                    <field name="mindamage" readonly="True"/>
+                                    <field name="maxdamage" readonly="True"/>
+                                </group>
+                            </group>
+                        </div>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="player_tree_view">
+            <field name="name">Player List</field>
+            <field name="model">odooarena.player</field>
+            <field name="arch" type="xml">
+                <tree string="Player List" limit="1">
+                    <field name="name" string="Player Name"/>
+                    <field name="level"/>
+                    <field name="maxhp"/>
+                </tree>
             </field>
         </record>
 
@@ -75,7 +129,7 @@
                 <form string="Arena">
                     <div id="container" style="width:100%;">
                         <div id="left" style="float:left; width:35%;">
-                            <field name='fighter_image' widget="image" options='{"size": [400, 550]}' class="oe_right"
+                            <field name='fighter_image' widget="image" options='{"size": [200, 275]}' class="oe_right"
                                    attrs="{'invisible': [('started', '=', False)]}"/>
                         </div>
                         <div id="right" style="float:right; width:65%;">
@@ -109,7 +163,7 @@
             <field name="model">odooarena.arena</field>
             <field name="arch" type="xml">
                 <tree string="Active Fights List">
-                    <field name="fighter_name"/>
+                    <field name="fighter_name" string="Active Fights List"/>
                     <field name="fighter_hp"/>
                     <field name="started"/>
                 </tree>
@@ -128,11 +182,14 @@
 
         <!-- actions -->
 
+        <menuitem name="Your Character" id="odooarena.menu_1_player" parent="odooarena.menu_1"
+                  action="odooarena.action_player" sequence="10"/>
+
         <menuitem name="Fighters" id="odooarena.menu_1_fighters" parent="odooarena.menu_1"
-                  action="odooarena.action_fighters"/>
+                  action="odooarena.action_fighters" sequence="11"/>
 
         <menuitem name="Arena" id="odooarena.menu_1_arena" parent="odooarena.menu_1"
-                  action="odooarena.action_arena"/>
+                  action="odooarena.action_arena" sequence="12"/>
 
 
     </data>

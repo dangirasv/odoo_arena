@@ -13,7 +13,7 @@ class odooarena_character(models.Model):
     mindamage = fields.Integer("Minimum Damage", default=8)
     maxdamage = fields.Integer("Max Damage", default=12)
     image = fields.Binary("Image")
-    level = fields.Integer("Character Level")
+    level = fields.Integer("Character Level", default=1)
 
 
 class odooarena_player(models.Model):
@@ -38,15 +38,35 @@ class odooarena_arena(models.Model):
     fighter_name = fields.Char("Fighter Name")
     fighter_hp = fields.Integer("Fighter Health Points", default=100)
     fighter_image = fields.Binary("Fighter Image")
+    fighter_mindamage = fields.Integer("Fighter Minimum Damage")
+    fighter_maxdamage = fields.Integer("Fighter Max Damage")
     started = fields.Boolean("Has combat started?", default=False)
+
+    player_name = fields.Char("Player Name")
+    player_hp = fields.Integer("Player Health Points", default=100)
+    player_image = fields.Binary("Player Image")
+    player_mindamage = fields.Integer("Minimum Damage")
+    player_maxdamage = fields.Integer("Max Damage")
 
     def prepare_fight(self):
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
+        player = self.env['odooarena.player'].search([('id', '=', 1)])
         self.fighter_name = fighter.name
         self.fighter_hp = fighter.maxhp
         self.fighter_image = fighter.image
         self.started = True
+        self.fighter_mindamage = fighter.mindamage
+        self.fighter_maxdamage = fighter.maxdamage
+        self.player_name = player.name
+        self.player_hp = player.maxhp
+        self.player_image = player.image
+        self.player_mindamage = player.mindamage
+        self.player_maxdamage = player.maxdamage
 
         self.write({'fighter_name': self.fighter_name, 'fighter_hp': self.fighter_hp,
-                    'fighter_image': self.fighter_image, 'started': self.started})
+                    'fighter_image': self.fighter_image, 'started': self.started,
+                    'fighter_mindamage': self.fighter_mindamage, 'fighter_maxdamage': self.fighter_maxdamage,
+                    'player_name': self.player_name, 'player_hp': self.player_hp, 'player_image': self.player_image,
+                    'player_mindamage': self.player_mindamage, 'player_maxdamage': self.player_maxdamage})
+
 
