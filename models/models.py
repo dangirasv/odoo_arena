@@ -2,6 +2,7 @@
 
 from odoo import models, fields, api
 from random import randint
+from odoo.exceptions import Warning
 
 
 class odooarena_character(models.Model):
@@ -63,6 +64,8 @@ class odooarena_arena(models.Model):
         self.player_image = player.image
         self.player_mindamage = player.mindamage
         self.player_maxdamage = player.maxdamage
+        print(fighter.id)
+        print(fighter.id + 1)
 
         self.write({'fighter_name': self.fighter_name, 'fighter_hp': self.fighter_hp,
                     'fighter_image': self.fighter_image, 'started': self.started,
@@ -73,8 +76,30 @@ class odooarena_arena(models.Model):
     def attack(self):
         player_damage = randint(self.player_mindamage, self.player_maxdamage)
         self.fighter_hp -= player_damage
+        log = "Player has dealt %d damage to the fighter." % player_damage
+        if self.fighter_hp <= 0:
+            self.write({'fighter_hp': self.fighter_hp, 'combat_log': log})
+            self.player_won()
+        else:
+            log = self.fighter_attack(log)
+            self.write({'fighter_hp': self.fighter_hp, 'player_hp': self.player_hp, 'combat_log': log})
+
+    def fighter_attack(self, log):
         fighter_damage = randint(self.fighter_mindamage, self.fighter_maxdamage)
         self.player_hp -= fighter_damage
-        self.write({'fighter_hp': self.fighter_hp, 'player_hp': self.player_hp,
-                    'combat_log': "Player has dealt %d damage to the fighter.\nFighter has dealt %d damage back."
-                                  % (player_damage, fighter_damage)})
+        log += "\nFighter has dealt %d damage back." % fighter_damage
+        return log
+
+    def player_won(self):
+        fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
+        fighter.alive = False
+        fighter.fighting = False
+        next_fighter = self.env['odooarena.fighter'].search([('id', '=', fighter.id+1)])
+        try:
+            next_fighter.fighting = True
+        except ValueError:
+            self.env['odooarena.fighter'].search([('id', '=', 1)]).fighting = True
+            raise Warning("Congratulations! You've beaten all Arena fighters! You can run the gauntlet again with your"
+                          " overpowered character or create a new character")
+        self.search([('fighter_hp', '<=', 0)]).unlink()
+

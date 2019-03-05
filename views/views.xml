@@ -22,7 +22,7 @@
             <field name="view_mode">tree,form</field>
             <field name="help" type="html">
                 <h1>Welcome to the Arena!</h1>
-                <p class="oe_view_nocontent_smiling_face">Please click the "Create" button to initiate the fight</p>
+                <p class="oe_view_nocontent_smiling_face">Please click the "Create" and then "Save" buttons to initiate the fight</p>
             </field>
         </record>
 
@@ -117,6 +117,7 @@
                     <field name="level"/>
                     <field name="maxhp"/>
                     <field name="alive"/>
+                    <field name="fighting"/>
                 </tree>
             </field>
         </record>
@@ -178,8 +179,10 @@
                     </div>
 
                     <footer>
-                        <button type="object" name="attack" string="Attack"
-                                attrs="{'invisible': [('started', '=', False)]}" class="oe_highlight"/>
+                        <center>
+                            <button type="object" name="attack" string="Attack"
+                                    attrs="{'invisible': [('started', '=', False)]}" class="oe_highlight"/>
+                        </center>
                         <button type="object" name="prepare_fight" string="Start the fight"
                                 attrs="{'invisible': [('started', '=', True)]}" class="oe_highlight"/>
 
