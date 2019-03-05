@@ -22,6 +22,8 @@ class odooarena_player(models.Model):
     _name = 'odooarena.player'
     _inherit = 'odooarena.character'
 
+    image = fields.Binary("Image")
+
 
 class odooarena_fighter(models.Model):
     _name = 'odooarena.fighter'
@@ -64,8 +66,6 @@ class odooarena_arena(models.Model):
         self.player_image = player.image
         self.player_mindamage = player.mindamage
         self.player_maxdamage = player.maxdamage
-        print(fighter.id)
-        print(fighter.id + 1)
 
         self.write({'fighter_name': self.fighter_name, 'fighter_hp': self.fighter_hp,
                     'fighter_image': self.fighter_image, 'started': self.started,
@@ -77,12 +77,9 @@ class odooarena_arena(models.Model):
         player_damage = randint(self.player_mindamage, self.player_maxdamage)
         self.fighter_hp -= player_damage
         log = "Player has dealt %d damage to the fighter." % player_damage
-        if self.fighter_hp <= 0:
-            self.write({'fighter_hp': self.fighter_hp, 'combat_log': log})
-            self.player_won()
-        else:
-            log = self.fighter_attack(log)
-            self.write({'fighter_hp': self.fighter_hp, 'player_hp': self.player_hp, 'combat_log': log})
+        log = self.fighter_attack(log)
+        self.write({'fighter_hp': self.fighter_hp, 'player_hp': self.player_hp, 'combat_log': log})
+        self.death_checks()
 
     def fighter_attack(self, log):
         fighter_damage = randint(self.fighter_mindamage, self.fighter_maxdamage)
@@ -90,9 +87,14 @@ class odooarena_arena(models.Model):
         log += "\nFighter has dealt %d damage back." % fighter_damage
         return log
 
+    def death_checks(self):
+        if self.fighter_hp <= 0:
+            self.player_won()
+        elif self.player_hp <= 0:
+            self.player_lost()
+
     def player_won(self):
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
-        fighter.alive = False
         fighter.fighting = False
         next_fighter = self.env['odooarena.fighter'].search([('id', '=', fighter.id+1)])
         try:
@@ -102,4 +104,11 @@ class odooarena_arena(models.Model):
             raise Warning("Congratulations! You've beaten all Arena fighters! You can run the gauntlet again with your"
                           " overpowered character or create a new character")
         self.search([('fighter_hp', '<=', 0)]).unlink()
+
+    def player_lost(self):
+        fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
+        fighter.fighting = False
+        self.env['odooarena.fighter'].search([('id', '=', 1)]).fighting = True
+        self.env['odooarena.player'].search([('id', '=', 1)]).unlink()
+        self.search([('player_hp', '<=', 0)]).unlink()
 
