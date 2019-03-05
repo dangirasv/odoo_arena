@@ -22,7 +22,7 @@
             <field name="view_mode">tree,form</field>
             <field name="help" type="html">
                 <h1>Welcome to the Arena!</h1>
-                <p class="oe_view_nocontent_smiling_face">Please click the button to start the fight</p>
+                <p class="oe_view_nocontent_smiling_face">Please click the "Create" button to initiate the fight</p>
             </field>
         </record>
 
@@ -137,12 +137,12 @@
                                 <div id="leftright" style="float:right; width:65%;">
                                     <group colspan="4">
                                         <group colspan="2" col="2">
-                                            <separator string="Character Info" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
+                                            <separator string="Fighter Info" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
                                             <field name="fighter_name" attrs="{'invisible': [('started', '=', False)]}"/>
                                         </group>
 
                                         <group colspan="2" col="2">
-                                            <separator string="Character Status" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
+                                            <separator string="Fighter Status" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
                                             <field name="started" invisible="1"/>
                                             <field name="fighter_hp" widget="progressbar" attrs="{'invisible': [('started', '=', False)]}"/>
                                         </group>
@@ -171,14 +171,15 @@
                                 </div>
                             </div>
                         </div>
-                        <group colspan="2" col="2">
-                            <separator colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
+
+                            <separator string="Combat Log" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
                             <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
-                        </group>
+
                     </div>
 
                     <footer>
-
+                        <button type="object" name="attack" string="Attack"
+                                attrs="{'invisible': [('started', '=', False)]}" class="oe_highlight"/>
                         <button type="object" name="prepare_fight" string="Start the fight"
                                 attrs="{'invisible': [('started', '=', True)]}" class="oe_highlight"/>
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api
+from random import randint
 
 
 class odooarena_character(models.Model):
@@ -69,4 +70,11 @@ class odooarena_arena(models.Model):
                     'player_name': self.player_name, 'player_hp': self.player_hp, 'player_image': self.player_image,
                     'player_mindamage': self.player_mindamage, 'player_maxdamage': self.player_maxdamage})
 
-
+    def attack(self):
+        player_damage = randint(self.player_mindamage, self.player_maxdamage)
+        self.fighter_hp -= player_damage
+        fighter_damage = randint(self.fighter_mindamage, self.fighter_maxdamage)
+        self.player_hp -= fighter_damage
+        self.write({'fighter_hp': self.fighter_hp, 'player_hp': self.player_hp,
+                    'combat_log': "Player has dealt %d damage to the fighter.\nFighter has dealt %d damage back."
+                                  % (player_damage, fighter_damage)})
