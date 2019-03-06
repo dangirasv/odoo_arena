@@ -23,6 +23,9 @@ class odooarena_player(models.Model):
     _inherit = 'odooarena.character'
 
     image = fields.Binary("Image")
+    name = fields.Char("Character Name", default="Player")
+    creator_id = fields.Many2one('res.users', ondelete='set null', string="Character Creator ID", index=True,
+                                 default=lambda self: self.env.user)
 
 
 class odooarena_fighter(models.Model):
@@ -54,7 +57,8 @@ class odooarena_arena(models.Model):
 
     def prepare_fight(self):
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
-        player = self.env['odooarena.player'].search([('id', '=', 1)])
+        player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
+        """
         self.fighter_name = fighter.name
         self.fighter_hp = fighter.maxhp
         self.fighter_image = fighter.image
@@ -66,19 +70,20 @@ class odooarena_arena(models.Model):
         self.player_image = player.image
         self.player_mindamage = player.mindamage
         self.player_maxdamage = player.maxdamage
+        """
 
-        self.write({'fighter_name': self.fighter_name, 'fighter_hp': self.fighter_hp,
-                    'fighter_image': self.fighter_image, 'started': self.started,
-                    'fighter_mindamage': self.fighter_mindamage, 'fighter_maxdamage': self.fighter_maxdamage,
-                    'player_name': self.player_name, 'player_hp': self.player_hp, 'player_image': self.player_image,
-                    'player_mindamage': self.player_mindamage, 'player_maxdamage': self.player_maxdamage})
+        self.write({'fighter_name': fighter.name, 'fighter_hp': fighter.maxhp,
+                    'fighter_image': fighter.image, 'started': True,
+                    'fighter_mindamage': fighter.mindamage, 'fighter_maxdamage': fighter.maxdamage,
+                    'player_name': player.name, 'player_hp': player.maxhp, 'player_image': player.image,
+                    'player_mindamage': player.mindamage, 'player_maxdamage': player.maxdamage})
 
     def attack(self):
         player_damage = randint(self.player_mindamage, self.player_maxdamage)
-        self.fighter_hp -= player_damage
+        # self.fighter_hp -= player_damage
         log = "Player has dealt %d damage to the fighter." % player_damage
         log = self.fighter_attack(log)
-        self.write({'fighter_hp': self.fighter_hp, 'player_hp': self.player_hp, 'combat_log': log})
+        self.write({'fighter_hp': self.fighter_hp - player_damage, 'combat_log': log})
         self.death_checks()
 
     def fighter_attack(self, log):
@@ -103,12 +108,33 @@ class odooarena_arena(models.Model):
             self.env['odooarena.fighter'].search([('id', '=', 1)]).fighting = True
             raise Warning("Congratulations! You've beaten all Arena fighters! You can run the gauntlet again with your"
                           " overpowered character or create a new character")
+        action = self.env.ref('odooarena.action_arena').read()[0]
         self.search([('fighter_hp', '<=', 0)]).unlink()
+        return action
 
+    @api.multi
     def player_lost(self):
+        print(self.env.ref('odooarena.action_player').read())
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         fighter.fighting = False
         self.env['odooarena.fighter'].search([('id', '=', 1)]).fighting = True
-        self.env['odooarena.player'].search([('id', '=', 1)]).unlink()
+        self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]).unlink()
         self.search([('player_hp', '<=', 0)]).unlink()
+        self.retur_to_title()
 
+    @api.multi
+    def retur_to_title(self):
+        print(self.env.ref('odooarena.action_player').read())
+        view_id = self.env.ref('odooarena.player_tree_view').id
+        print(view_id)
+        print(type(view_id))
+        return {
+            'name': 'Odoo Arena Player',
+            'type': 'ir.action.act_window',
+            'res_model': 'odooarena.player',
+            'res_id': '0',
+            'view_id': '247',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'help': '',
+        }

@@ -2,7 +2,7 @@
     <data>
 
         <record model="ir.actions.act_window" id="odooarena.action_player">
-            <field name="name">Odoo Arena</field>
+            <field name="name">Odoo Arena Player</field>
             <field name="res_model">odooarena.player</field>
             <field name="view_mode">tree,form</field>
             <field name="help" type="html">
@@ -43,6 +43,7 @@
                                 <group colspan="2" col="2">
                                     <separator string="Player Character Info" colspan="2"/>
                                     <field name="name"/>
+                                    <field name="creator_id" readonly="True"/>
                                 </group>
 
                                 <group colspan="2" col="2">
