@@ -34,6 +34,11 @@
                     domain="[('creator_id', '=', uid)]"
         />
 
+        <act_window id="action_skills"
+                    name="Character Skills"
+                    res_model="odooarena.skills"
+                    view_mode="list,form"
+        />
 
         <record model="ir.ui.view" id="player_form_view">
             <field name="name">Player Status</field>
@@ -59,6 +64,8 @@
                                     <field name="mana" readonly="True"/>
                                     <field name="mindamage" readonly="True"/>
                                     <field name="maxdamage" readonly="True"/>
+                                    <field name="armor" readonly="True" help="Shows how much damage is prevented after each attack"/>
+                                    <field name="crit_chance" readonly="True" help="A percentage of a chance to do double damage"/>
                                 </group>
                             </group>
                         </div>
@@ -105,6 +112,8 @@
                                     <field name="mana"/>
                                     <field name="mindamage"/>
                                     <field name="maxdamage"/>
+                                    <field name="armor" help="Shows how much damage is prevented after each attack"/>
+                                    <field name="crit_chance" help="A percentage of a chance to do double damage"/>
                                 </group>
                             </group>
                         </div>
@@ -140,8 +149,8 @@
                     <center attrs="{'invisible': [('started', '=', False)]}">
                         <button type="object" name="attack" string="Attack" help="Basic attack, dealing 8-12 damage"
                                 class="oe_highlight"/>
-                        <button type="object" name="return_to_title" string="Magic Bullet" class="oe_link"/>
-                        <button type="object" name="return_to_title" string="Block" class="oe_highlight"
+                        <button type="object" name="pistol_shot" string="Pistol Shot" class="oe_link"/>
+                        <button type="object" name="return_to_title" string="Absorb" class="oe_highlight"
                         help="Block 50% of received damage this turn and restore 40 mana"/>
                     </center>
 
@@ -149,7 +158,7 @@
                         <div id="left" style="float:left; width:50%;">
                             <div id="leftcontainer" style="width:100%;">
                                 <div id="leftleft" style="float:left; width:35%;">
-                                    <field name='fighter_image' widget="image" options='{"size": [200, 275]}' class="oe_right"/>
+                                    <field name='fighter_image' widget="image" options='{"size": [210, 290]}' class="oe_right"/>
                                 </div>
                                 <div id="leftright" style="float:right; width:65%;">
                                     <group colspan="4">
@@ -165,6 +174,8 @@
                                             decoration-success="fighter_hp&gt;50" decoration-warning ="fighter_hp&lt;51"/>
                                             <field name="fighter_mana" widget="progressbar" decoration-danger="fighter_mana&lt;1"
                                             decoration-info="fighter_mana&gt;0"/>
+                                            <field name="fighter_armor"/>
+                                            <field name="fighter_crit_chance"/>
                                         </group>
                                     </group>
                                 </div>
@@ -173,7 +184,7 @@
                         <div id="right" style="float:right; width:50%;">
                             <div id="rightcontainer" style="width:100%;">
                                 <div id="rightleft" style="float:left; width:35%;">
-                                    <field name='player_image' widget="image" options='{"size": [200, 275]}' class="oe_right"/>
+                                    <field name='player_image' widget="image" options='{"size": [210, 290]}' class="oe_right"/>
                                 </div>
                                 <div id="rightright" style="float:right; width:65%;">
                                     <group colspan="4">
@@ -188,6 +199,8 @@
                                             decoration-success="player_hp&gt;50" decoration-warning ="player_hp&lt;51"/>
                                             <field name="player_mana" widget="progressbar" decoration-danger="player_mana&lt;1"
                                             decoration-info="player_mana&gt;0"/>
+                                            <field name="player_armor"/>
+                                            <field name="player_crit_chance"/>
                                         </group>
                                     </group>
                                 </div>
@@ -212,12 +225,57 @@
             <field name="arch" type="xml">
                 <tree string="Active Fights List">
                     <field name="fighter_name" string="Active Fights List"/>
-                    <field name="fighter_hp"/>
                     <field name="started"/>
                 </tree>
             </field>
         </record>
 
+        <record model="ir.ui.view" id="skill_form_view">
+            <field name="name">Skills</field>
+            <field name="model">odooarena.skills</field>
+            <field name="arch" type="xml">
+                <form string="Skills">
+                    <div id="container" style="width:100%;">
+                        <div id="left" style="float:left; width:35%;">
+
+                        </div>
+                        <div id="right" style="float:right; width:65%;">
+                            <group colspan="4">
+                                <group colspan="2" col="2">
+                                    <separator string="Skill Info" colspan="2"/>
+                                    <field name="image" widget="image"/>
+                                    <field name="name"/>
+                                    <field name="skill_type"/>
+                                    <field name="description"/>
+                                </group>
+
+                                <group colspan="2" col="2">
+                                    <separator string="Skill Effects" colspan="2"/>
+                                    <field name="min_change_to_hp"/>
+                                    <field name="max_change_to_hp"/>
+                                    <field name="min_change_to_mana"/>
+                                    <field name="max_change_to_mana"/>
+                                    <field name="change_to_armor"/>
+                                    <field name="change_to_crit"/>
+                                    <field name="log_text"/>
+                                </group>
+                            </group>
+                        </div>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="player_tree_view">
+            <field name="name">Skill List</field>
+            <field name="model">odooarena.skills</field>
+            <field name="arch" type="xml">
+                <tree string="Skill List">
+                    <field name="name"/>
+                    <field name="skill_type"/>
+                </tree>
+            </field>
+        </record>
 
 
         <!-- Top menu item -->
@@ -234,10 +292,13 @@
                   action="odooarena.action_player" sequence="10"/>
 
         <menuitem name="Fighters" id="odooarena.menu_1_fighters" parent="odooarena.menu_1"
-                  action="odooarena.action_fighters" sequence="11"/>
+                  action="odooarena.action_fighters" sequence="12"/>
 
         <menuitem name="Arena" id="odooarena.menu_1_arena" parent="odooarena.menu_1"
-                  action="odooarena.action_arena" sequence="12"/>
+                  action="odooarena.action_arena" sequence="11"/>
+
+        <menuitem name="Skills" id="odooarena.menu_1_skills" parent="odooarena.menu_1"
+                  action="odooarena.action_skills" sequence="13"/>
 
 
     </data>

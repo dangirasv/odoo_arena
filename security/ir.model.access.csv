@@ -3,3 +3,4 @@ access_odooarena_fighter,odooarena.fighter,model_odooarena_fighter,,1,1,1,1
 access_odooarena_character,access_odooarena_character,model_odooarena_character,base.group_user,1,1,1,1
 access_odooarena_player,access_odooarena_player,model_odooarena_player,base.group_user,1,1,1,1
 access_odooarena_arena,access_odooarena_arena,model_odooarena_arena,base.group_user,1,1,1,1
+access_odooarena_skills,access_odooarena_skills,model_odooarena_skills,base.group_user,1,1,1,1
