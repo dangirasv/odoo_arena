@@ -56,6 +56,7 @@
                                     <separator string="Character Status" colspan="2"/>
                                     <field name="level" readonly="True"/>
                                     <field name="maxhp" readonly="True"/>
+                                    <field name="mana" readonly="True"/>
                                     <field name="mindamage" readonly="True"/>
                                     <field name="maxdamage" readonly="True"/>
                                 </group>
@@ -101,6 +102,7 @@
                                     <field name="fighting"/>
                                     <field name="level"/>
                                     <field name="maxhp"/>
+                                    <field name="mana"/>
                                     <field name="mindamage"/>
                                     <field name="maxdamage"/>
                                 </group>
@@ -135,24 +137,34 @@
             <field name="model">odooarena.arena</field>
             <field name="arch" type="xml">
                 <form string="Arena">
-                    <div id="container" style="width:100%;">
+                    <center attrs="{'invisible': [('started', '=', False)]}">
+                        <button type="object" name="attack" string="Attack" help="Basic attack, dealing 8-12 damage"
+                                class="oe_highlight"/>
+                        <button type="object" name="return_to_title" string="Magic Bullet" class="oe_link"/>
+                        <button type="object" name="return_to_title" string="Block" class="oe_highlight"
+                        help="Block 50% of received damage this turn and restore 40 mana"/>
+                    </center>
+
+                    <div id="container" style="width:100%;" attrs="{'invisible': [('started', '=', False)]}">
                         <div id="left" style="float:left; width:50%;">
                             <div id="leftcontainer" style="width:100%;">
                                 <div id="leftleft" style="float:left; width:35%;">
-                                    <field name='fighter_image' widget="image" options='{"size": [200, 275]}' class="oe_right"
-                                           attrs="{'invisible': [('started', '=', False)]}"/>
+                                    <field name='fighter_image' widget="image" options='{"size": [200, 275]}' class="oe_right"/>
                                 </div>
                                 <div id="leftright" style="float:right; width:65%;">
                                     <group colspan="4">
                                         <group colspan="2" col="2">
-                                            <separator string="Fighter Info" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
-                                            <field name="fighter_name" attrs="{'invisible': [('started', '=', False)]}"/>
+                                            <separator string="Fighter Info" colspan="2"/>
+                                            <field name="fighter_name"/>
                                         </group>
 
                                         <group colspan="2" col="2">
-                                            <separator string="Fighter Status" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
+                                            <separator string="Fighter Status" colspan="2"/>
                                             <field name="started" invisible="1"/>
-                                            <field name="fighter_hp" widget="progressbar" attrs="{'invisible': [('started', '=', False)]}"/>
+                                            <field name="fighter_hp" widget="progressbar" decoration-danger="fighter_hp&lt;1"
+                                            decoration-success="fighter_hp&gt;50" decoration-warning ="fighter_hp&lt;51"/>
+                                            <field name="fighter_mana" widget="progressbar" decoration-danger="fighter_mana&lt;1"
+                                            decoration-info="fighter_mana&gt;0"/>
                                         </group>
                                     </group>
                                 </div>
@@ -161,39 +173,31 @@
                         <div id="right" style="float:right; width:50%;">
                             <div id="rightcontainer" style="width:100%;">
                                 <div id="rightleft" style="float:left; width:35%;">
-                                    <field name='player_image' widget="image" options='{"size": [200, 275]}' class="oe_right"
-                                           attrs="{'invisible': [('started', '=', False)]}"/>
+                                    <field name='player_image' widget="image" options='{"size": [200, 275]}' class="oe_right"/>
                                 </div>
                                 <div id="rightright" style="float:right; width:65%;">
                                     <group colspan="4">
                                         <group colspan="2" col="2">
-                                            <separator string="Player Info" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
-                                            <field name="player_name" attrs="{'invisible': [('started', '=', False)]}"/>
+                                            <separator string="Player Info" colspan="2"/>
+                                            <field name="player_name"/>
                                         </group>
 
                                         <group colspan="2" col="2">
-                                            <separator string="Player Status" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
-                                            <field name="player_hp" widget="progressbar" attrs="{'invisible': [('started', '=', False)]}"/>
+                                            <separator string="Player Status" colspan="2"/>
+                                            <field name="player_hp" widget="progressbar" decoration-danger="player_hp&lt;1"
+                                            decoration-success="player_hp&gt;50" decoration-warning ="player_hp&lt;51"/>
+                                            <field name="player_mana" widget="progressbar" decoration-danger="player_mana&lt;1"
+                                            decoration-info="player_mana&gt;0"/>
                                         </group>
                                     </group>
                                 </div>
                             </div>
                         </div>
-
-                            <separator string="Combat Log" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
-                            <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
-
                     </div>
-
+                    <separator string="Combat Log" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
+                            <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
                     <footer>
-                        <center>
-                            <button type="object" name="attack" string="Attack"
-                                    attrs="{'invisible': [('started', '=', False)]}" class="oe_highlight"/> |
-                            <button type="object" name="return_to_title" string="Special Attack"
-                                    attrs="{'invisible': [('started', '=', False)]}" class="oe_highlight"/> |
-                            <button type="object" name="return_to_title" string="Block"
-                                    attrs="{'invisible': [('started', '=', False)]}" class="oe_highlight"/>
-                        </center>
+
                         <button type="object" name="prepare_fight" string="Start the fight"
                                 attrs="{'invisible': [('started', '=', True)]}" class="oe_highlight"/>
 

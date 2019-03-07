@@ -12,6 +12,7 @@ class odooarena_character(models.Model):
     name = fields.Char("Character Name")
     maxhp = fields.Integer("Max Health Points", default=100)
     currenthp = fields.Integer("Current Health Points", default=100)
+    mana = fields.Integer("Mana Points", default=100)
     mindamage = fields.Integer("Minimum Damage", default=8)
     maxdamage = fields.Integer("Max Damage", default=12)
     image = fields.Binary("Image")
@@ -43,14 +44,16 @@ class odooarena_arena(models.Model):
 
     combat_log = fields.Text("Combat Log")
     fighter_name = fields.Char("Fighter Name")
-    fighter_hp = fields.Integer("Fighter Health Points", default=100)
+    fighter_hp = fields.Integer("Fighter Health Points")
+    fighter_mana = fields.Integer("Fighter Mana Points")
     fighter_image = fields.Binary("Fighter Image")
     fighter_mindamage = fields.Integer("Fighter Minimum Damage")
     fighter_maxdamage = fields.Integer("Fighter Max Damage")
     started = fields.Boolean("Has combat started?", default=False)
 
     player_name = fields.Char("Player Name")
-    player_hp = fields.Integer("Player Health Points", default=100)
+    player_hp = fields.Integer("Player Health Points")
+    player_mana = fields.Integer("Player Mana Points")
     player_image = fields.Binary("Player Image")
     player_mindamage = fields.Integer("Minimum Damage")
     player_maxdamage = fields.Integer("Max Damage")
@@ -59,16 +62,18 @@ class odooarena_arena(models.Model):
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
         if not player:
-            raise Warning("Please create a new character to fight first.")
+            raise Warning("You're dead! Please go to menu Game->Your Character to create a new character first.")
         else:
-            self.write({'fighter_name': fighter.name, 'fighter_hp': fighter.maxhp, 'fighter_image': fighter.image,
-                        'started': True, 'fighter_mindamage': fighter.mindamage, 'fighter_maxdamage': fighter.maxdamage,
-                        'player_name': player.name, 'player_hp': player.maxhp, 'player_image': player.image,
-                        'player_mindamage': player.mindamage, 'player_maxdamage': player.maxdamage, 'combat_log': ""})
+            self.write({'fighter_name': fighter.name, 'fighter_hp': fighter.maxhp, 'fighter_mana': fighter.mana,
+                        'fighter_image': fighter.image, 'started': True, 'fighter_mindamage': fighter.mindamage,
+                        'fighter_maxdamage': fighter.maxdamage, 'player_name': player.name, 'player_hp': player.maxhp,
+                        'player_mana': player.mana, 'player_image': player.image, 'player_mindamage': player.mindamage,
+                        'player_maxdamage': player.maxdamage, 'combat_log': ""})
 
     def attack(self):
         if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]):
-            raise Warning("Please create a new character to fight first.")
+            self.started = False
+            # raise Warning("Please create a new character to fight first.")
         else:
             player_damage = randint(self.player_mindamage, self.player_maxdamage)
             log = (player_damage, "Player has dealt %d damage to the fighter." % player_damage)
@@ -93,6 +98,7 @@ class odooarena_arena(models.Model):
             self.player_lost()
 
     def player_won(self):
+        player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         fighter.fighting = False
         next_fighter = self.env['odooarena.fighter'].search([('id', '=', fighter.id+1)])
@@ -102,9 +108,9 @@ class odooarena_arena(models.Model):
             self.env['odooarena.fighter'].search([('id', '=', 1)]).fighting = True
             raise Warning("Congratulations! You've beaten all Arena fighters! You can run the gauntlet again with your"
                           " overpowered character or create a new character")
-        action = self.env.ref('odooarena.action_arena').read()[0]
-        self.search([('fighter_hp', '<=', 0)]).unlink()
-        return action
+        # self.search([('fighter_hp', '<=', 0)]).unlink()
+        player.level += 1
+        self.started = False
 
     @api.multi
     def player_lost(self):
@@ -122,7 +128,7 @@ class odooarena_arena(models.Model):
         # action_id = self.env.ref('odooarena.player_lost')
         return {
             'name': "Create Another Character",
-            'type': 'ir.actions.act_window',
+            # 'type': 'ir.actions.act_window',
             'res_model': 'odooarena.player',
             'view_mode': 'list,form',
             'domain': "[('creator_id', '=', uid)]",
