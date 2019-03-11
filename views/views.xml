@@ -149,8 +149,9 @@
                     <center attrs="{'invisible': [('started', '=', False)]}">
                         <button type="object" name="attack" string="Attack" help="Basic attack, dealing 8-12 damage"
                                 class="oe_highlight"/>
-                        <button type="object" name="pistol_shot" string="Pistol Shot" class="oe_link"/>
-                        <button type="object" name="return_to_title" string="Absorb" class="oe_highlight"
+                        <button type="object" name="pistol_shot" string="Pistol Shot" class="oe_link"
+                                help="Load your pistol with magic bullet and shoot at the target, dealing 10-20 damage. Costs 30 mana."/>
+                        <button type="object" name="absorb" string="Absorb" class="oe_highlight"
                         help="Block 50% of received damage this turn and restore 40 mana"/>
                     </center>
 
@@ -224,7 +225,7 @@
             <field name="model">odooarena.arena</field>
             <field name="arch" type="xml">
                 <tree string="Active Fights List">
-                    <field name="fighter_name" string="Active Fights List"/>
+                    <field name="name" string="Active Fights List"/>
                     <field name="started"/>
                 </tree>
             </field>

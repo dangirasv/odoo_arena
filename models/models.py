@@ -64,6 +64,7 @@ class odooarena_arena(models.Model):
     _name = 'odooarena.arena'
     _description = 'main class where the battle happens'
 
+    name = fields.Char("The Fight", default="The Fight")
     combat_log = fields.Text("Combat Log")
     started = fields.Boolean("Has combat started?", default=False)
 
@@ -91,21 +92,39 @@ class odooarena_arena(models.Model):
         if not player:
             raise Warning("You're dead! Please go to menu Game->Your Character to create a new character first.")
         else:
-            self.write({'started': True, 'fighter_name': fighter.name, 'fighter_hp': fighter.maxhp,
-                        'fighter_mana': fighter.mana, 'fighter_image': fighter.image, 'fighter_armor': fighter.armor,
-                        'fighter_mindamage': fighter.mindamage, 'fighter_maxdamage': fighter.maxdamage,
-                        'fighter_crit_chance': fighter.crit_chance, 'player_name': player.name,
-                        'player_hp': player.maxhp, 'player_mana': player.mana, 'player_image': player.image,
-                        'player_mindamage': player.mindamage,'player_maxdamage': player.maxdamage,
-                        'player_armor': player.armor, 'player_crit_chance': player.crit_chance, 'combat_log': ""})
+            self.write({
+                'started': True,
+                'fighter_name': fighter.name,
+                'fighter_hp': fighter.maxhp,
+                'fighter_mana': fighter.mana,
+                'fighter_image': fighter.image,
+                'fighter_mindamage': fighter.mindamage,
+                'fighter_maxdamage': fighter.maxdamage,
+                'fighter_armor': fighter.armor,
+                'fighter_crit_chance': fighter.crit_chance,
+                'player_name': player.name,
+                'player_hp': player.maxhp,
+                'player_mana': player.mana,
+                'player_image': player.image,
+                'player_mindamage': player.mindamage,
+                'player_maxdamage': player.maxdamage,
+                'player_armor': player.armor,
+                'player_crit_chance': player.crit_chance,
+                'combat_log': "",
+            })
+
+    """ PLAYER ACTIONS """
 
     def attack(self):
         if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]):
             self.started = False
         else:
-            player_damage = randint(self.player_mindamage, self.player_maxdamage)
-            log = (player_damage, "Player has dealt %d damage to the fighter.\n" % player_damage)
-            self.fighter_reactions_and_log(log)
+            player_damage = randint(self.player_mindamage, self.player_maxdamage) - self.fighter_armor
+            log = {
+                'damage': player_damage,
+                'combat_log': "Player has dealt %d damage to the fighter.\n" % player_damage,
+            }
+            self.fighter_reactions_and_log(log, 1)
             self.death_checks()
 
     def pistol_shot(self):
@@ -117,19 +136,50 @@ class odooarena_arena(models.Model):
             self.player_mana -= 30
             skill = self.env['odooarena.skills'].search([('id', '=', 3)])
             player_damage = randint(skill.min_change_to_hp, skill.max_change_to_hp)
-            log = (player_damage, "Player " + skill.log_text % player_damage + "\n")
-            self.fighter_reactions_and_log(log)
+            log = {
+                'damage': player_damage,
+                'combat_log': "Player " + skill.log_text % player_damage + "\n",
+            }
+            self.fighter_reactions_and_log(log, 1)
             self.death_checks()
 
-    def fighter_reactions_and_log(self, log):
-        info_list = [log, self.fighter_attack()]
-        self.write({'fighter_hp': self.fighter_hp - info_list[0][0], 'player_hp': self.player_hp - info_list[1][0],
-                    'combat_log': info_list[0][1] + info_list[1][1]})
+    def absorb(self):
+        player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
+        if not player:
+            self.started = False
+        else:
+            self.player_mana += 40
+            if self.player_mana > player.mana:
+                self.player_mana = 100
+            log = {
+                'damage': 0,
+                'combat_log': "absorbs 50% of the damage received this turn and restores 40 mana\n",
+            }
+            self.fighter_reactions_and_log(log, 0.5)
+            self.death_checks()
 
-    def fighter_attack(self):
-        fighter_damage = randint(self.fighter_mindamage, self.fighter_maxdamage)
-        log = (fighter_damage, "Fighter has dealt %d damage back." % fighter_damage)
+    def fighter_reactions_and_log(self, log, damage_modifier):
+        info = {
+            'player': log,
+            'fighter': self.fighter_attack(damage_modifier),
+        }
+        self.write({
+            'fighter_hp': self.fighter_hp - info['player']['damage'],
+            'player_hp': self.player_hp - info['fighter']['damage'],
+            'combat_log': info['player']['combat_log'] + info['fighter']['combat_log'],
+        })
+
+    """ FIGHTER AI """
+
+    def fighter_attack(self, damage_modifier):
+        fighter_damage = randint(self.fighter_mindamage, self.fighter_maxdamage) * damage_modifier
+        log = {
+            'damage': fighter_damage,
+            'combat_log': "Fighter has dealt %d damage back." % fighter_damage,
+        }
         return log
+
+    """ /FIGHTER AI """
 
     @api.multi
     def death_checks(self):
