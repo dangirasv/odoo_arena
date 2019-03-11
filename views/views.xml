@@ -64,8 +64,8 @@
                                     <field name="mana" readonly="True"/>
                                     <field name="mindamage" readonly="True"/>
                                     <field name="maxdamage" readonly="True"/>
-                                    <field name="armor" readonly="True" help="Shows how much damage is prevented after each attack"/>
-                                    <field name="crit_chance" readonly="True" help="A percentage of a chance to do double damage"/>
+                                    <field name="armor" help="Shows how much damage is prevented after each attack"/>
+                                    <field name="crit_chance" help="A percentage of a chance to do double damage"/>
                                 </group>
                             </group>
                         </div>
@@ -285,21 +285,23 @@
 
         <!-- menu categories -->
 
-        <menuitem name="Game" id="odooarena.menu_1" parent="odooarena.menu_root"/>
+        <menuitem name="Game Menu" id="odooarena.menu_1" parent="odooarena.menu_root"/>
 
         <!-- actions -->
 
         <menuitem name="Your Character" id="odooarena.menu_1_player" parent="odooarena.menu_1"
                   action="odooarena.action_player" sequence="10"/>
 
-        <menuitem name="Fighters" id="odooarena.menu_1_fighters" parent="odooarena.menu_1"
-                  action="odooarena.action_fighters" sequence="12"/>
-
         <menuitem name="Arena" id="odooarena.menu_1_arena" parent="odooarena.menu_1"
                   action="odooarena.action_arena" sequence="11"/>
 
-        <menuitem name="Skills" id="odooarena.menu_1_skills" parent="odooarena.menu_1"
-                  action="odooarena.action_skills" sequence="13"/>
+        <menuitem name="Codex" id="odooarena.menu_1_codex" parent="odooarena.menu_1" sequence="12"/>
+
+        <menuitem name="Fighters" id="odooarena.menu_1_codex_fighters" parent="odooarena.menu_1_codex"
+                  action="odooarena.action_fighters" sequence="13"/>
+
+        <menuitem name="Skills" id="odooarena.menu_1_codex_skills" parent="odooarena.menu_1_codex"
+                  action="odooarena.action_skills" sequence="14"/>
 
 
     </data>

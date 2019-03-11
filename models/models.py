@@ -120,9 +120,11 @@ class odooarena_arena(models.Model):
             self.started = False
         else:
             player_damage = randint(self.player_mindamage, self.player_maxdamage) - self.fighter_armor
+            combat_log = "Player has dealt %d damage to the fighter"
+            player_damage, combat_log = self.update_if_player_crit(player_damage, combat_log)
             log = {
                 'damage': player_damage,
-                'combat_log': "Player has dealt %d damage to the fighter.\n" % player_damage,
+                'combat_log': combat_log % player_damage,
             }
             self.fighter_reactions_and_log(log, 1)
             self.death_checks()
@@ -135,10 +137,11 @@ class odooarena_arena(models.Model):
         else:
             self.player_mana -= 30
             skill = self.env['odooarena.skills'].search([('id', '=', 3)])
-            player_damage = randint(skill.min_change_to_hp, skill.max_change_to_hp)
+            player_damage = randint(skill.min_change_to_hp, skill.max_change_to_hp) - self.fighter_armor
+            player_damage, combat_log = self.update_if_player_crit(player_damage, skill.log_text)
             log = {
                 'damage': player_damage,
-                'combat_log': "Player " + skill.log_text % player_damage + "\n",
+                'combat_log': "Player " + combat_log % player_damage,
             }
             self.fighter_reactions_and_log(log, 1)
             self.death_checks()
@@ -153,7 +156,7 @@ class odooarena_arena(models.Model):
                 self.player_mana = 100
             log = {
                 'damage': 0,
-                'combat_log': "absorbs 50% of the damage received this turn and restores 40 mana\n",
+                'combat_log': "Player absorbs 50% of the damage received this turn and restores 40 mana",
             }
             self.fighter_reactions_and_log(log, 0.5)
             self.death_checks()
@@ -169,13 +172,21 @@ class odooarena_arena(models.Model):
             'combat_log': info['player']['combat_log'] + info['fighter']['combat_log'],
         })
 
+    def update_if_player_crit(self, damage, log):
+        chance = randint(1, 100)
+        if chance <= self.player_crit_chance:
+            # restoring original damage value since we want armor applied after critical hit, not before
+            damage = (damage + self.fighter_armor) * 2 - self.fighter_armor
+            log += " (critical damage!)"
+        return damage, log
+
     """ FIGHTER AI """
 
     def fighter_attack(self, damage_modifier):
         fighter_damage = randint(self.fighter_mindamage, self.fighter_maxdamage) * damage_modifier
         log = {
             'damage': fighter_damage,
-            'combat_log': "Fighter has dealt %d damage back." % fighter_damage,
+            'combat_log': "\nFighter has dealt %d damage back" % fighter_damage,
         }
         return log
 
