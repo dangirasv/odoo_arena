@@ -47,7 +47,7 @@
                 <form string="Player Character Screen">
                     <div id="container" style="width:100%;">
                         <div id="left" style="float:left; width:35%;">
-                            <field name='image' widget="image" options='{"size": [400, 550]}' class="oe_right"/>
+                            <field name='image' widget="image" options='{"size": [400, 550]}' class="oe_right" readonly="True"/>
                         </div>
                         <div id="right" style="float:right; width:65%;">
                             <group colspan="4">
@@ -65,7 +65,7 @@
                                     <field name="mindamage" readonly="True"/>
                                     <field name="maxdamage" readonly="True"/>
                                     <field name="armor" help="Shows how much damage is prevented after each attack"/>
-                                    <field name="crit_chance" help="A percentage of a chance to do double damage"/>
+                                    <field name="crit_chance" help="A percentage of a chance to do double damage" widget="percentage"/>
                                 </group>
                             </group>
                         </div>
@@ -112,7 +112,7 @@
                                     <field name="mindamage"/>
                                     <field name="maxdamage"/>
                                     <field name="armor" help="Shows how much damage is prevented after each attack"/>
-                                    <field name="crit_chance" help="A percentage of a chance to do double damage"/>
+                                    <field name="crit_chance" help="A percentage of a chance to do double damage" widget="percentage"/>
                                     <field name="basic_skill"/>
                                     <field name="ultimate_skill"/>
                                 </group>
@@ -177,7 +177,7 @@
                                             <field name="fighter_mana" widget="progressbar" decoration-danger="fighter_mana&lt;1"
                                             decoration-info="fighter_mana&gt;0"/>
                                             <field name="fighter_armor"/>
-                                            <field name="fighter_crit_chance"/>
+                                            <field name="fighter_crit_chance" widget="percentage"/>
                                         </group>
                                     </group>
                                 </div>
@@ -202,7 +202,7 @@
                                             <field name="player_mana" widget="progressbar" decoration-danger="player_mana&lt;1"
                                             decoration-info="player_mana&gt;0"/>
                                             <field name="player_armor"/>
-                                            <field name="player_crit_chance"/>
+                                            <field name="player_crit_chance" widget="percentage"/>
                                         </group>
                                     </group>
                                 </div>
@@ -211,6 +211,9 @@
                     </div>
                     <separator string="Combat Log" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
                             <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
+                    <div type="html">
+                        <center><h1>You Lost!</h1></center>
+                    </div>
                     <footer>
 
                         <button type="object" name="prepare_fight" string="Start the fight"
@@ -251,7 +254,7 @@
                                     <field name="description"/>
                                 </group>
 
-                                <group colspan="2" col="2">
+                                <group colspan="2" col="2" class="oe_edit_only">
                                     <separator string="Skill Effects" colspan="2"/>
                                     <field name="min_change_to_hp"/>
                                     <field name="max_change_to_hp"/>

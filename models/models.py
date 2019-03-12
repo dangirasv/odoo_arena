@@ -3,6 +3,13 @@
 from odoo import models, fields, api
 from random import randint
 from odoo.exceptions import Warning
+from odoo import modules
+import base64
+
+
+def get_default_player_img():
+    with open(modules.get_module_resource('odooarena', 'static/img', 'player.jpg'), 'rb') as f:
+        return base64.b64encode(f.read())
 
 
 class odooarena_character(models.Model):
@@ -18,14 +25,14 @@ class odooarena_character(models.Model):
     image = fields.Binary("Image")
     level = fields.Integer("Character Level", default=1)
     armor = fields.Integer("Armor Points", default=0)
-    crit_chance = fields.Integer("Critical Damage Chance", default=10)
+    crit_chance = fields.Float("Critical Damage Chance", default=0.1)
 
 
 class odooarena_player(models.Model):
     _name = 'odooarena.player'
     _inherit = 'odooarena.character'
 
-    image = fields.Binary("Image")
+    image = fields.Binary("Image", default=get_default_player_img())
     name = fields.Char("Character Name", default="Player")
     creator_id = fields.Many2one('res.users', ondelete='set null', string="Character Creator ID", index=True,
                                  default=lambda self: self.env.user)
@@ -175,7 +182,7 @@ class odooarena_arena(models.Model):
 
     def update_if_player_crit(self, damage, log):
         chance = randint(1, 100)
-        if chance <= self.player_crit_chance:
+        if chance <= self.player_crit_chance*100:
             # restoring original damage value since we want armor applied after critical hit, not before
             damage = (damage + self.fighter_armor) * 2 - self.fighter_armor
             log += " (critical damage!)"
@@ -276,7 +283,7 @@ class odooarena_arena(models.Model):
         chance = randint(1, 100)
         print(chance)
         print(damage)
-        if chance <= self.fighter_crit_chance:
+        if chance <= self.fighter_crit_chance*100:
             damage = (damage + self.player_armor) * 2 - self.player_armor
             log += " (critical damage!)"
             print(damage)
