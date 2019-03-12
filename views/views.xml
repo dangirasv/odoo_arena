@@ -105,7 +105,6 @@
 
                                 <group colspan="2" col="2">
                                     <separator string="Character Status" colspan="2"/>
-                                    <field name="alive"/>
                                     <field name="fighting"/>
                                     <field name="level"/>
                                     <field name="maxhp"/>
@@ -114,6 +113,8 @@
                                     <field name="maxdamage"/>
                                     <field name="armor" help="Shows how much damage is prevented after each attack"/>
                                     <field name="crit_chance" help="A percentage of a chance to do double damage"/>
+                                    <field name="basic_skill"/>
+                                    <field name="ultimate_skill"/>
                                 </group>
                             </group>
                         </div>

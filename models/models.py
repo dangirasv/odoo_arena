@@ -18,7 +18,7 @@ class odooarena_character(models.Model):
     image = fields.Binary("Image")
     level = fields.Integer("Character Level", default=1)
     armor = fields.Integer("Armor Points", default=0)
-    crit_chance = fields.Float("Critical Damage Chance", default=0)
+    crit_chance = fields.Integer("Critical Damage Chance", default=10)
 
 
 class odooarena_player(models.Model):
@@ -38,6 +38,8 @@ class odooarena_fighter(models.Model):
     alive = fields.Boolean("Alive", default=True)
     fighting = fields.Boolean("Active Fighter", default=False)
     bio = fields.Text("Fighter Background")
+    basic_skill = fields.Many2one('odooarena.skills', ondelete='set null', string="Primary Skill")
+    ultimate_skill = fields.Many2one('odooarena.skills', ondelete='set null', string="Ultimate Skill")
 
 
 class odooarena_skills(models.Model):
@@ -90,7 +92,7 @@ class odooarena_arena(models.Model):
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
         if not player:
-            raise Warning("You're dead! Please go to menu Game->Your Character to create a new character first.")
+            raise Warning("You're dead! Please go to Game Menu->Your Character to create a new character first.")
         else:
             self.write({
                 'started': True,
@@ -152,8 +154,6 @@ class odooarena_arena(models.Model):
             self.started = False
         else:
             self.player_mana += 40
-            if self.player_mana > player.mana:
-                self.player_mana = 100
             log = {
                 'damage': 0,
                 'combat_log': "Player absorbs 50% of the damage received this turn and restores 40 mana",
@@ -166,6 +166,7 @@ class odooarena_arena(models.Model):
             'player': log,
             'fighter': self.fighter_attack(damage_modifier),
         }
+        self.normalise_stats()
         self.write({
             'fighter_hp': self.fighter_hp - info['player']['damage'],
             'player_hp': self.player_hp - info['fighter']['damage'],
@@ -180,15 +181,106 @@ class odooarena_arena(models.Model):
             log += " (critical damage!)"
         return damage, log
 
+    def normalise_stats(self):
+        player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
+        fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
+        if self.player_mana > player.mana:
+            self.player_mana = player.mana
+        if self.player_mana < 0:
+            self.player_mana = 0
+        if self.player_crit_chance > 100:
+            self.player_crit_chance = 100
+        if self.player_crit_chance < 0:
+            self.player_crit_chance = 0
+        if self.player_armor < 0:
+            self.player_armor = 0
+        if self.fighter_mana > fighter.mana:
+            self.fighter_mana = fighter.mana
+        if self.fighter_mana < 0:
+            self.fighter_mana = 0
+        if self.fighter_crit_chance > 100:
+            self.fighter_crit_chance = 100
+        if self.fighter_crit_chance < 0:
+            self.fighter_crit_chance = 0
+        if self.fighter_armor < 0:
+            self.fighter_armor = 0
+
     """ FIGHTER AI """
 
     def fighter_attack(self, damage_modifier):
-        fighter_damage = randint(self.fighter_mindamage, self.fighter_maxdamage) * damage_modifier
+        action_index = randint(1, 10)
+        print(action_index)
+        if action_index < 5:
+            log = self.basic_fighter_attack(damage_modifier)
+        elif action_index < 7:
+            log = self.fighter_meditate()
+        elif action_index < 10:
+            if self.fighter_mana < 30:
+                log = self.fighter_attack(damage_modifier)
+            else:
+                log = self.fighter_basic_skill(damage_modifier)
+        else:
+            if self.fighter_mana < 50:
+                log = self.fighter_attack(damage_modifier)
+            else:
+                log = self.fighter_ultimate_skill(damage_modifier)
+        return log
+
+    def basic_fighter_attack(self, damage_modifier):
+        fighter_damage = (randint(self.fighter_mindamage, self.fighter_maxdamage) - self.player_armor) * damage_modifier
+        combat_log = "\nFighter has dealt %d damage back"
+        fighter_damage, combat_log = self.update_if_fighter_crit(fighter_damage, combat_log)
         log = {
             'damage': fighter_damage,
-            'combat_log': "\nFighter has dealt %d damage back" % fighter_damage,
+            'combat_log': combat_log % fighter_damage,
         }
         return log
+
+    def fighter_meditate(self):
+        skill = self.env['odooarena.skills'].search([('id', '=', 1)])
+        self.fighter_mana += 40
+        heal = randint(skill.min_change_to_hp, skill.max_change_to_hp)
+        self.fighter_hp += heal
+        log = {
+            'damage': 0,
+            'combat_log': "\nFighter " + skill.log_text % heal
+        }
+        return log
+
+    def fighter_basic_skill(self, damage_modifier):
+        skill = self.env['odooarena.fighter'].search([('fighting', '=', True)]).basic_skill
+        self.fighter_mana -= 30
+        self.player_mana -= skill.min_change_to_mana
+        fighter_damage = (randint(skill.min_change_to_hp, skill.max_change_to_hp) - self.player_armor) * damage_modifier
+        combat_log = "\nFighter " + skill.log_text
+        fighter_damage, combat_log = self.update_if_fighter_crit(fighter_damage, combat_log)
+        log = {
+            'damage': fighter_damage,
+            'combat_log': combat_log % fighter_damage,
+        }
+        return log
+
+    def fighter_ultimate_skill(self, damage_modifier):
+        skill = self.env['odooarena.fighter'].search([('fighting', '=', True)]).ultimate_skill
+        self.fighter_mana -= 50
+        fighter_damage = (randint(skill.min_change_to_hp, skill.max_change_to_hp) - self.player_armor) * damage_modifier
+        combat_log = "\nFighter " + skill.log_text
+        fighter_damage, combat_log = self.update_if_fighter_crit(fighter_damage, combat_log)
+        log = {
+            'damage': fighter_damage,
+            'combat_log': combat_log % fighter_damage,
+        }
+        return log
+
+    def update_if_fighter_crit(self, damage, log):
+        chance = randint(1, 100)
+        print(chance)
+        print(damage)
+        if chance <= self.fighter_crit_chance:
+            damage = (damage + self.player_armor) * 2 - self.player_armor
+            log += " (critical damage!)"
+            print(damage)
+        return damage, log
 
     """ /FIGHTER AI """
 
