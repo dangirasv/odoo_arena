@@ -53,20 +53,36 @@ class odooarena_skills(models.Model):
     _name = 'odooarena.skills'
     _description = 'stores skills used by players and fighters'
 
-    VAR_LIST = [('a', 'Attack'),
-                ('d', 'Defense')]
+    SKILL_TYPE_LIST = [('a', 'Attack'),
+                       ('d', 'Defense')]
 
     name = fields.Char("Skill Name")
-    skill_type = fields.Selection(VAR_LIST, string="Skill Type", default='a')
+    skill_type = fields.Selection(SKILL_TYPE_LIST, string="Skill Type", default='a')
     image = fields.Binary("Image")
     description = fields.Text("Skill Description")
+    mana_cost = fields.Integer("Mana Cost")
     min_change_to_hp = fields.Integer("Minimum Changes to Target HP")
     max_change_to_hp = fields.Integer("Maximum Changes to Target HP")
-    change_to_armor = fields.Integer("Change to Targets Armor")
     min_change_to_mana = fields.Integer("Minimum Change to Target Mana")
     max_change_to_mana = fields.Integer("Maximum Change to Target Mana")
+    change_to_armor = fields.Integer("Change to Targets Armor")
     change_to_crit = fields.Float("Change to Targets Critical Chance")
     log_text = fields.Char("Skill Combat Log Text")
+
+
+class odooarena_items(models.Model):
+    _name = 'odooarena.items'
+    _description = 'stores items that are rewarded after each win'
+
+    name = fields.Char("Item Name")
+    image = fields.Binary("Image")
+    item_level = fields.Integer("Item Level")
+    description = fields.Text("Item Description")
+    change_to_hp = fields.Integer("Changes to HP")
+    change_to_mana = fields.Integer("Change to Mana")
+    change_to_armor = fields.Integer("Change to Armor")
+    change_to_crit = fields.Float("Change to Critical Chance")
+    change_to_damage = fields.Integer("Changes to Damage")
 
 
 class odooarena_arena(models.Model):
@@ -75,7 +91,10 @@ class odooarena_arena(models.Model):
 
     name = fields.Char("The Fight", default="The Fight")
     combat_log = fields.Text("Combat Log")
+    lost_msg = fields.Text("Message, displayed on loss", default="You lost! Please go to Game Menu->Your Character to "
+                                                                 "create a new character")
     started = fields.Boolean("Has combat started?", default=False)
+    lost = fields.Boolean("Has player lost?", default=False)
 
     fighter_name = fields.Char("Fighter Name")
     fighter_hp = fields.Integer("Fighter Health Points")
@@ -103,6 +122,7 @@ class odooarena_arena(models.Model):
         else:
             self.write({
                 'started': True,
+                'lost': False,
                 'fighter_name': fighter.name,
                 'fighter_hp': fighter.maxhp,
                 'fighter_mana': fighter.mana,
@@ -125,7 +145,7 @@ class odooarena_arena(models.Model):
     """ PLAYER ACTIONS """
 
     def attack(self):
-        if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]):
+        if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]) or self.player_hp <= 0:
             self.started = False
         else:
             player_damage = randint(self.player_mindamage, self.player_maxdamage) - self.fighter_armor
@@ -139,7 +159,7 @@ class odooarena_arena(models.Model):
             self.death_checks()
 
     def pistol_shot(self):
-        if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]):
+        if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]) or self.player_hp <= 0:
             self.started = False
         elif self.player_mana < 30:
             raise Warning("You don't have enough mana to use this skill")
@@ -157,7 +177,7 @@ class odooarena_arena(models.Model):
 
     def absorb(self):
         player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
-        if not player:
+        if not player or self.player_hp <= 0:
             self.started = False
         else:
             self.player_mana += 40
@@ -216,19 +236,18 @@ class odooarena_arena(models.Model):
 
     def fighter_attack(self, damage_modifier):
         action_index = randint(1, 10)
-        print(action_index)
         if action_index < 5:
             log = self.basic_fighter_attack(damage_modifier)
         elif action_index < 7:
             log = self.fighter_meditate()
         elif action_index < 10:
-            if self.fighter_mana < 30:
+            if self.fighter_mana < self.env['odooarena.fighter'].search([('fighting', '=', True)]).basic_skill.mana_cost:
                 log = self.fighter_attack(damage_modifier)
             else:
                 log = self.fighter_basic_skill(damage_modifier)
         else:
-            if self.fighter_mana < 50:
-                log = self.fighter_attack(damage_modifier)
+            if self.fighter_mana < self.env['odooarena.fighter'].search([('fighting', '=', True)]).ultimate_skill.mana_cost:
+                log = self.fighter_meditate()
             else:
                 log = self.fighter_ultimate_skill(damage_modifier)
         return log
@@ -256,20 +275,25 @@ class odooarena_arena(models.Model):
 
     def fighter_basic_skill(self, damage_modifier):
         skill = self.env['odooarena.fighter'].search([('fighting', '=', True)]).basic_skill
-        self.fighter_mana -= 30
+        self.fighter_mana -= skill.mana_cost
         self.player_mana -= skill.min_change_to_mana
-        fighter_damage = (randint(skill.min_change_to_hp, skill.max_change_to_hp) - self.player_armor) * damage_modifier
-        combat_log = "\nFighter " + skill.log_text
-        fighter_damage, combat_log = self.update_if_fighter_crit(fighter_damage, combat_log)
-        log = {
-            'damage': fighter_damage,
-            'combat_log': combat_log % fighter_damage,
-        }
+        log = self.create_log_and_crit_chance_check_for_skills(damage_modifier, skill)
         return log
 
     def fighter_ultimate_skill(self, damage_modifier):
         skill = self.env['odooarena.fighter'].search([('fighting', '=', True)]).ultimate_skill
-        self.fighter_mana -= 50
+        self.fighter_mana -= skill.mana_cost
+        log = self.create_log_and_crit_chance_check_for_skills(damage_modifier, skill)
+        return log
+
+    def update_if_fighter_crit(self, damage, log):
+        chance = randint(1, 100)
+        if chance <= self.fighter_crit_chance*100:
+            damage = (damage + self.player_armor) * 2 - self.player_armor
+            log += " (critical damage!)"
+        return damage, log
+
+    def create_log_and_crit_chance_check_for_skills(self, damage_modifier, skill):
         fighter_damage = (randint(skill.min_change_to_hp, skill.max_change_to_hp) - self.player_armor) * damage_modifier
         combat_log = "\nFighter " + skill.log_text
         fighter_damage, combat_log = self.update_if_fighter_crit(fighter_damage, combat_log)
@@ -278,16 +302,6 @@ class odooarena_arena(models.Model):
             'combat_log': combat_log % fighter_damage,
         }
         return log
-
-    def update_if_fighter_crit(self, damage, log):
-        chance = randint(1, 100)
-        print(chance)
-        print(damage)
-        if chance <= self.fighter_crit_chance*100:
-            damage = (damage + self.player_armor) * 2 - self.player_armor
-            log += " (critical damage!)"
-            print(damage)
-        return damage, log
 
     """ /FIGHTER AI """
 
@@ -302,11 +316,11 @@ class odooarena_arena(models.Model):
         player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         fighter.fighting = False
-        next_fighter = self.env['odooarena.fighter'].search([('id', '=', fighter.id+1)])
+        next_fighter = self.env['odooarena.fighter'].search([('id', '=', fighter.level+1)])
         try:
             next_fighter.fighting = True
         except ValueError:
-            self.env['odooarena.fighter'].search([('id', '=', 1)]).fighting = True
+            self.env['odooarena.fighter'].search([('level', '=', 1)]).fighting = True
             self.started = False
         # raise Warning("Congratulations! You've beaten all Arena fighters! You can run the gauntlet again with your"
         #               " overpowered character or create a new character")
@@ -316,22 +330,32 @@ class odooarena_arena(models.Model):
 
     @api.multi
     def player_lost(self):
-        fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
-        fighter.fighting = False
-        self.env['odooarena.fighter'].search([('id', '=', 1)]).fighting = True
+        self.env['odooarena.fighter'].search([('fighting', '=', True)]).fighting = False
+        self.env['odooarena.fighter'].search([('level', '=', 1)]).fighting = True
         self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]).unlink()
+        self.lost = True
         # self.search([('player_hp', '<=', 0)]).unlink()
         # self.started = False
 
-    @api.multi
-    def return_to_title(self):
-        # action = self.env.ref('odooarena.action_player').read()[0]
+    def reset(self):
+        self.started = False
+        self.lost = False
+
+    # Only failures here
+
+    def lost_window(self):
+        print(1)
+        # action = self.env.ref('odooarena.you_lost_form_view').read()[0]
         # return action
-        # action_id = self.env.ref('odooarena.player_lost')
+        action_id = self.env.ref('odooarena.you_lost_form_view')
+        print(action_id)
+        print(self.id)
         return {
-            'name': "Create Another Character",
-            # 'type': 'ir.actions.act_window',
-            'res_model': 'odooarena.player',
-            'view_mode': 'list,form',
-            'domain': "[('creator_id', '=', uid)]",
+            'name': "You Lost!",
+            'type': 'ir.actions.act_window',
+            'res_model': 'odooarena.arena',
+            'view_mode': 'form',
+            'view_id': action_id.id,
+            'target': 'new',
+            'domain': "[('creator_id', '=', 'self.env.user.id')]",
         }

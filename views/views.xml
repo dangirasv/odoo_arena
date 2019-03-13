@@ -1,44 +1,16 @@
 <odoo>
     <data>
 
-        <record model="ir.actions.act_window" id="odooarena.action_player">
-            <field name="name">Odoo Arena Player</field>
-            <field name="res_model">odooarena.player</field>
-            <field name="view_mode">tree,form</field>
-            <field name="domain">[('creator_id', '=', uid)]</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_smiling_face">Please click the "Create" button to create your character</p>
+        <record model="ir.ui.view" id="you_lost_form_view">
+            <field name="name">You Lost!</field>
+            <field name="model">odooarena.arena</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="lost_msg" type="html" readonly="True"/>
+                    <button type="object" name="reset" string="Ok" class="oe_highlight"/>
+                </form>
             </field>
         </record>
-
-        <record model="ir.actions.act_window" id="odooarena.action_fighters">
-            <field name="name">Odoo Arena Fighters</field>
-            <field name="res_model">odooarena.fighter</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-
-        <record model="ir.actions.act_window" id="odooarena.action_arena">
-            <field name="name">Odoo Arena</field>
-            <field name="res_model">odooarena.arena</field>
-            <field name="view_mode">tree,form</field>
-            <field name="help" type="html">
-                <h1>Welcome to the Arena!</h1>
-                <p class="oe_view_nocontent_smiling_face">Please click the "Create" and then "Save" buttons to initiate the fight</p>
-            </field>
-        </record>
-
-        <act_window id="player_lost"
-                    name="Create Another Character"
-                    res_model="odooarena.player"
-                    view_mode="list,form"
-                    domain="[('creator_id', '=', uid)]"
-        />
-
-        <act_window id="action_skills"
-                    name="Character Skills"
-                    res_model="odooarena.skills"
-                    view_mode="list,form"
-        />
 
         <record model="ir.ui.view" id="player_form_view">
             <field name="name">Player Status</field>
@@ -78,7 +50,7 @@
             <field name="name">Player List</field>
             <field name="model">odooarena.player</field>
             <field name="arch" type="xml">
-                <tree string="Player List" limit="1">
+                <tree string="Player List" default_order='level'>
                     <field name="name" string="Player Name"/>
                     <field name="level"/>
                     <field name="maxhp"/>
@@ -120,8 +92,10 @@
                         </div>
                     </div>
                     <footer>
+                        <!-- action button to start the fight from info panel, decided not to use for now
                         <button type="action" name="%(odooarena.action_arena)d" string="start the fight"
                                 attrs="{'invisible': [('fighting', '=', False)]}" class="oe_highlight"/>
+                        -->
                     </footer>
                 </form>
             </field>
@@ -131,7 +105,7 @@
             <field name="name">Fighter List</field>
             <field name="model">odooarena.fighter</field>
             <field name="arch" type="xml">
-                <tree string="Fighter List">
+                <tree string="Fighter List" default_order='level'>
                     <field name="name"/>
                     <field name="level"/>
                     <field name="maxhp"/>
@@ -155,7 +129,7 @@
                         <button type="object" name="absorb" string="Absorb" class="oe_highlight"
                         help="Block 50% of received damage this turn and restore 40 mana"/>
                     </center>
-
+                    <group>
                     <div id="container" style="width:100%;" attrs="{'invisible': [('started', '=', False)]}">
                         <div id="left" style="float:left; width:50%;">
                             <div id="leftcontainer" style="width:100%;">
@@ -209,10 +183,17 @@
                             </div>
                         </div>
                     </div>
+                    </group>
                     <separator string="Combat Log" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
                             <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
-                    <div type="html">
-                        <center><h1>You Lost!</h1></center>
+                    <div type="html" attrs="{'invisible': [('lost', '!=', True)]}">
+                        <center>
+                            <h2>
+                                <field name="lost" invisible="1"/>
+                                <field name="lost_msg"/>
+                                <button type="object" name="reset" string="Ok" class="oe_highlight"/>
+                            </h2>
+                        </center>
                     </div>
                     <footer>
 
@@ -252,6 +233,7 @@
                                     <field name="name"/>
                                     <field name="skill_type"/>
                                     <field name="description"/>
+                                    <field name="mana_cost"/>
                                 </group>
 
                                 <group colspan="2" col="2" class="oe_edit_only">
@@ -283,6 +265,103 @@
         </record>
 
 
+        <record model="ir.ui.view" id="items_form_view">
+            <field name="name">Items</field>
+            <field name="model">odooarena.items</field>
+            <field name="arch" type="xml">
+                <form string="Items">
+                    <div id="container" style="width:100%;">
+                        <div id="left" style="float:left; width:35%;">
+
+                        </div>
+                        <div id="right" style="float:right; width:65%;">
+                            <group colspan="4">
+                                <group colspan="2" col="2">
+                                    <separator string="Item Info" colspan="2"/>
+                                    <field name="image" widget="image"/>
+                                    <field name="name"/>
+                                    <field name="item_level"/>
+                                    <field name="description"/>
+                                </group>
+
+                                <group colspan="2" col="2" class="oe_edit_only">
+                                    <separator string="Item Effects" colspan="2"/>
+                                    <field name="change_to_hp"/>
+                                    <field name="change_to_mana"/>
+                                    <field name="change_to_armor"/>
+                                    <field name="change_to_crit"/>
+                                    <field name="change_to_damage"/>
+                                </group>
+                            </group>
+                        </div>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="item_tree_view">
+            <field name="name">Items List</field>
+            <field name="model">odooarena.items</field>
+            <field name="arch" type="xml">
+                <tree string="Items List" default_order='item_level'>
+                    <field name="name"/>
+                    <field name="item_level"/>
+                </tree>
+            </field>
+        </record>
+
+
+                <!-- ACTIONS -->
+
+        <record model="ir.actions.act_window" id="odooarena.action_player">
+            <field name="name">Odoo Arena Player</field>
+            <field name="res_model">odooarena.player</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('creator_id', '=', uid)]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_smiling_face">Please click the "Create" button to create your character</p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="odooarena.action_fighters">
+            <field name="name">Odoo Arena Fighters</field>
+            <field name="res_model">odooarena.fighter</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="odooarena.action_arena">
+            <field name="name">Odoo Arena</field>
+            <field name="res_model">odooarena.arena</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <h1>Welcome to the Arena!</h1>
+                <p class="oe_view_nocontent_smiling_face">Please click the "Create" and then "Save" buttons to initiate the fight</p>
+            </field>
+        </record>
+
+        <act_window id="action_skills"
+                    name="Character Skills"
+                    res_model="odooarena.skills"
+                    view_mode="list,form"
+        />
+
+        <act_window id="action_items"
+                    name="Game Items"
+                    res_model="odooarena.items"
+                    view_mode="list,form"
+        />
+
+<!--
+        <act_window id="player_lost"
+                    name="You lost!"
+                    res_model="odooarena.arena"
+                    view_mode="form"
+                    view_id="you_lost_form_view"
+                    target="new"
+        />
+-->
+
+
         <!-- Top menu item -->
 
         <menuitem name="Odoo Arena" id="odooarena.menu_root"/>
@@ -291,22 +370,25 @@
 
         <menuitem name="Game Menu" id="odooarena.menu_1" parent="odooarena.menu_root"/>
 
+        <menuitem name="Codex" id="odooarena.menu_2" parent="odooarena.menu_root"/>
+
         <!-- actions -->
 
-        <menuitem name="Your Character" id="odooarena.menu_1_player" parent="odooarena.menu_1"
-                  action="odooarena.action_player" sequence="10"/>
-
         <menuitem name="Arena" id="odooarena.menu_1_arena" parent="odooarena.menu_1"
-                  action="odooarena.action_arena" sequence="11"/>
+                  action="odooarena.action_arena" sequence="10"/>
 
-        <menuitem name="Codex" id="odooarena.menu_1_codex" parent="odooarena.menu_1" sequence="12"/>
+        <menuitem name="Your Character" id="odooarena.menu_1_player" parent="odooarena.menu_1"
+                  action="odooarena.action_player" sequence="11"/>
 
-        <menuitem name="Fighters" id="odooarena.menu_1_codex_fighters" parent="odooarena.menu_1_codex"
+
+        <menuitem name="Fighters" id="odooarena.menu_2_fighters" parent="odooarena.menu_2"
                   action="odooarena.action_fighters" sequence="13"/>
 
-        <menuitem name="Skills" id="odooarena.menu_1_codex_skills" parent="odooarena.menu_1_codex"
+        <menuitem name="Skills" id="odooarena.menu_2_skills" parent="odooarena.menu_2"
                   action="odooarena.action_skills" sequence="14"/>
 
+        <menuitem name="Items" id="odooarena.menu_2_items" parent="odooarena.menu_2"
+                  action="odooarena.action_items" sequence="15"/>
 
     </data>
 </odoo>
