@@ -69,6 +69,7 @@ class odooarena_skills(models.Model):
     max_change_to_mana = fields.Integer("Maximum Change to Target Mana")
     change_to_armor = fields.Integer("Change to Targets Armor")
     change_to_crit = fields.Float("Change to Targets Critical Chance")
+    change_to_damage = fields.Integer("Changes to target Damage", default=0)
     log_text = fields.Char("Skill Combat Log Text")
 
 
@@ -285,14 +286,13 @@ class odooarena_arena(models.Model):
 
     def fighter_basic_skill(self, damage_modifier):
         skill = self.env['odooarena.fighter'].search([('fighting', '=', True)]).basic_skill
-        self.fighter_mana -= skill.mana_cost
-        self.player_mana -= skill.min_change_to_mana
+        self.apply_mana_cost_and_status_changes(skill)
         log = self.create_log_and_crit_chance_check_for_skills(damage_modifier, skill)
         return log
 
     def fighter_ultimate_skill(self, damage_modifier):
         skill = self.env['odooarena.fighter'].search([('fighting', '=', True)]).ultimate_skill
-        self.fighter_mana -= skill.mana_cost
+        self.apply_mana_cost_and_status_changes(skill)
         log = self.create_log_and_crit_chance_check_for_skills(damage_modifier, skill)
         return log
 
@@ -312,6 +312,16 @@ class odooarena_arena(models.Model):
             'combat_log': combat_log % fighter_damage,
         }
         return log
+
+    def apply_mana_cost_and_status_changes(self, skill):
+        self.write({
+            'fighter_mana': self.fighter_mana - skill.mana_cost,
+            'player_mana': self.player_mana - skill.min_change_to_mana,
+            'player_armor': self.player_armor - skill.change_to_armor,
+            'player_crit_chance': self.player_crit_chance - skill.change_to_crit,
+            'player_mindamage': self.player_mindamage - skill.change_to_damage,
+            'player_maxdamage': self.player_maxdamage - skill.change_to_damage,
+        })
 
     """ END GAME OPERATIONS """
 

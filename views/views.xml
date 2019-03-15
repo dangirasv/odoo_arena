@@ -96,7 +96,7 @@
             <field name="name">Fighter List</field>
             <field name="model">odooarena.fighter</field>
             <field name="arch" type="xml">
-                <tree string="Fighter List" default_order='level' editable="bottom">
+                <tree string="Fighter List" default_order='level'>
                     <field name="name"/>
                     <field name="level"/>
                     <field name="maxhp"/>
@@ -265,6 +265,7 @@
                                     <field name="max_change_to_mana"/>
                                     <field name="change_to_armor"/>
                                     <field name="change_to_crit"/>
+                                    <field name="change_to_damage"/>
                                     <field name="log_text"/>
                                 </group>
                             </group>
