@@ -1,17 +1,6 @@
 <odoo>
     <data>
 
-        <record model="ir.ui.view" id="you_lost_form_view">
-            <field name="name">You Lost!</field>
-            <field name="model">odooarena.arena</field>
-            <field name="arch" type="xml">
-                <form>
-                    <field name="lost_msg" type="html" readonly="True"/>
-                    <button type="object" name="reset" string="Ok" class="oe_highlight"/>
-                </form>
-            </field>
-        </record>
-
         <record model="ir.ui.view" id="player_form_view">
             <field name="name">Player Status</field>
             <field name="model">odooarena.player</field>
@@ -87,6 +76,8 @@
                                     <field name="crit_chance" help="A percentage of a chance to do double damage" widget="percentage"/>
                                     <field name="basic_skill"/>
                                     <field name="ultimate_skill"/>
+                                    <field name="drops_item_1"/>
+                                    <field name="drops_item_2"/>
                                 </group>
                             </group>
                         </div>
@@ -105,7 +96,7 @@
             <field name="name">Fighter List</field>
             <field name="model">odooarena.fighter</field>
             <field name="arch" type="xml">
-                <tree string="Fighter List" default_order='level'>
+                <tree string="Fighter List" default_order='level' editable="bottom">
                     <field name="name"/>
                     <field name="level"/>
                     <field name="maxhp"/>
@@ -186,20 +177,50 @@
                     </group>
                     <separator string="Combat Log" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
                             <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
-                    <div type="html" attrs="{'invisible': [('lost', '!=', True)]}">
+                    <div attrs="{'invisible': [('lost', '!=', True)]}">
                         <center>
                             <h2>
                                 <field name="lost" invisible="1"/>
-                                <field name="lost_msg"/>
+                                <h1>You've lost!</h1>
+                                <p>Please go to Game Menu->Your Character to create a new character.</p>
                                 <button type="object" name="reset" string="Ok" class="oe_highlight"/>
                             </h2>
                         </center>
                     </div>
-                    <footer>
+                    <div attrs="{'invisible': [('won', '!=', True)]}">
+                        <center>
+                            <h2>You've won!<p>Please choose an item as a reward.</p></h2>
+                            <div id="Rewards" style="width:60%;">
+                                <div id="rew_left" style="float:left; width:50%;">
+                                    <field name="won" invisible="1"/>
+                                    <field name="reward_img_1" widget="image" options='{"size": [100, 100]}' help='reward_desc_1'/>
+                                    <p>
+                                        <h3>
+                                        <field name="reward_name_1"/>
+                                        </h3>
+                                    </p>
+                                    <field name="reward_desc_1"/>
+                                    <button type="object" name="chose_item_1" string="Choose Item" class="oe_highlight"/>
+                                </div>
+                                <div id="rew_right" style="float:right; width:50%;">
+                                    <field name="reward_img_2" widget="image" options='{"size": [100, 100]}'/>
+                                    <p>
+                                        <h3>
+                                        <field name="reward_name_2"/>
+                                        </h3>
+                                    </p>
+                                    <field name="reward_desc_2"/>
+                                    <button type="object" name="chose_item_2" string="Choose Item" class="oe_highlight"/>
+                                </div>
+                            </div>
 
-                        <button type="object" name="prepare_fight" string="Start the fight"
-                                attrs="{'invisible': [('started', '=', True)]}" class="oe_highlight"/>
-
+                        </center>
+                    </div>
+                    <footer attrs="{'invisible': [('started', '=', True)]}">
+                        <center>
+                            <h2>Welcome to your next challenge!</h2>
+                            <button type="object" name="prepare_fight" string="Start the fight" class="oe_highlight"/>
+                        </center>
                     </footer>
                 </form>
             </field>
@@ -253,7 +274,7 @@
             </field>
         </record>
 
-        <record model="ir.ui.view" id="player_tree_view">
+        <record model="ir.ui.view" id="skill_tree_view">
             <field name="name">Skill List</field>
             <field name="model">odooarena.skills</field>
             <field name="arch" type="xml">
@@ -333,6 +354,7 @@
             <field name="name">Odoo Arena</field>
             <field name="res_model">odooarena.arena</field>
             <field name="view_mode">tree,form</field>
+            <field name="domain">[('fighter.fighting', '=', True)]</field>
             <field name="help" type="html">
                 <h1>Welcome to the Arena!</h1>
                 <p class="oe_view_nocontent_smiling_face">Please click the "Create" and then "Save" buttons to initiate the fight</p>

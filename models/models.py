@@ -47,6 +47,8 @@ class odooarena_fighter(models.Model):
     bio = fields.Text("Fighter Background")
     basic_skill = fields.Many2one('odooarena.skills', ondelete='set null', string="Primary Skill")
     ultimate_skill = fields.Many2one('odooarena.skills', ondelete='set null', string="Ultimate Skill")
+    drops_item_1 = fields.Many2one('odooarena.items', ondelete='set null', string="Drops item 1")
+    drops_item_2 = fields.Many2one('odooarena.items', ondelete='set null', string="Drops item 2")
 
 
 class odooarena_skills(models.Model):
@@ -91,10 +93,17 @@ class odooarena_arena(models.Model):
 
     name = fields.Char("The Fight", default="The Fight")
     combat_log = fields.Text("Combat Log")
-    lost_msg = fields.Text("Message, displayed on loss", default="You lost! Please go to Game Menu->Your Character to "
-                                                                 "create a new character")
     started = fields.Boolean("Has combat started?", default=False)
     lost = fields.Boolean("Has player lost?", default=False)
+    won = fields.Boolean("Has player won?", default=False)
+
+    fighter = fields.Many2one('odooarena.fighter', ondelete='set null', string="Active fighter")
+    reward_name_1 = fields.Char(related='fighter.drops_item_1.name', string="First reward's name")
+    reward_img_1 = fields.Binary(related='fighter.drops_item_1.image', string="First reward's image")
+    reward_desc_1 = fields.Text(related='fighter.drops_item_1.description', string="First reward's description")
+    reward_name_2 = fields.Char(related='fighter.drops_item_2.name', string="Second reward's name")
+    reward_img_2 = fields.Binary(related='fighter.drops_item_2.image', string="Second reward's image")
+    reward_desc_2 = fields.Text(related='fighter.drops_item_2.description', string="Second reward's description")
 
     fighter_name = fields.Char("Fighter Name")
     fighter_hp = fields.Integer("Fighter Health Points")
@@ -117,6 +126,7 @@ class odooarena_arena(models.Model):
     def prepare_fight(self):
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
+        self.fighter = fighter
         if not player:
             raise Warning("You're dead! Please go to Game Menu->Your Character to create a new character first.")
         else:
@@ -303,7 +313,7 @@ class odooarena_arena(models.Model):
         }
         return log
 
-    """ /FIGHTER AI """
+    """ END GAME OPERATIONS """
 
     @api.multi
     def death_checks(self):
@@ -321,12 +331,29 @@ class odooarena_arena(models.Model):
             next_fighter.fighting = True
         except ValueError:
             self.env['odooarena.fighter'].search([('level', '=', 1)]).fighting = True
-            self.started = False
-        # raise Warning("Congratulations! You've beaten all Arena fighters! You can run the gauntlet again with your"
-        #               " overpowered character or create a new character")
-        # self.search([('fighter_hp', '<=', 0)]).unlink()
         player.level += 1
-        self.started = False
+        self.won = True
+
+    def chose_item_1(self):
+        item = self.fighter.drops_item_1
+        self.item_stats_change(item)
+        self.reset()
+
+    def chose_item_2(self):
+        item = self.fighter.drops_item_2
+        self.item_stats_change(item)
+        self.reset()
+
+    def item_stats_change(self, item):
+        player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
+        player.write({
+            'maxhp': player.maxhp + item.change_to_hp,
+            'mana': player.mana + item.change_to_mana,
+            'armor': player.armor + item.change_to_armor,
+            'crit_chance': player.crit_chance + item.change_to_crit,
+            'mindamage': player.mindamage + item.change_to_damage,
+            'maxdamage': player.maxdamage + item.change_to_damage,
+        })
 
     @api.multi
     def player_lost(self):
@@ -334,12 +361,11 @@ class odooarena_arena(models.Model):
         self.env['odooarena.fighter'].search([('level', '=', 1)]).fighting = True
         self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]).unlink()
         self.lost = True
-        # self.search([('player_hp', '<=', 0)]).unlink()
-        # self.started = False
 
     def reset(self):
         self.started = False
         self.lost = False
+        self.won = False
 
     # Only failures here
 
