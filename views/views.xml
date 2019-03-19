@@ -112,13 +112,15 @@
             <field name="model">odooarena.arena</field>
             <field name="arch" type="xml">
                 <form string="Arena">
-                    <center attrs="{'invisible': [('started', '=', False)]}">
+                    <center attrs="{'invisible': ['|', ('started', '=', False), '|', ('won', '=', True), ('lost', '=', True)]}">
+                        <group colspan="1" col="6" class="oe_center">
                         <button type="object" name="attack" string="Attack" help="Basic attack, dealing 8-12 damage"
                                 class="oe_highlight"/>
                         <button type="object" name="pistol_shot" string="Pistol Shot" class="oe_link"
                                 help="Load your pistol with magic bullet and shoot at the target, dealing 10-20 damage. Costs 30 mana."/>
-                        <button type="object" name="absorb" string="Absorb" class="oe_highlight"
-                        help="Block 50% of received damage this turn and restore 40 mana"/>
+                        <button type="object" name="absorb" string="Absorb" class="oe_stat_button"
+                                help="Block 50% of received damage this turn and restore 40 mana"/>
+                        </group>
                     </center>
                     <group>
                     <div id="container" style="width:100%;" attrs="{'invisible': [('started', '=', False)]}">
@@ -137,6 +139,8 @@
                                         <group colspan="2" col="2">
                                             <separator string="Fighter Status" colspan="2"/>
                                             <field name="started" invisible="1"/>
+                                            <field name="won" invisible="1"/>
+                                            <field name="lost" invisible="1"/>
                                             <field name="fighter_hp" widget="progressbar" decoration-danger="fighter_hp&lt;1"
                                             decoration-success="fighter_hp&gt;50" decoration-warning ="fighter_hp&lt;51"/>
                                             <field name="fighter_mana" widget="progressbar" decoration-danger="fighter_mana&lt;1"

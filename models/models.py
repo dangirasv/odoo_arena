@@ -24,7 +24,7 @@ class odooarena_character(models.Model):
     maxdamage = fields.Integer("Max Damage", default=12)
     image = fields.Binary("Image")
     level = fields.Integer("Character Level", default=1)
-    armor = fields.Integer("Armor Points", default=0)
+    armor = fields.Integer("Armor Points", default=2)
     crit_chance = fields.Float("Critical Damage Chance", default=0.1)
 
 
@@ -134,6 +134,7 @@ class odooarena_arena(models.Model):
             self.write({
                 'started': True,
                 'lost': False,
+                'won': False,
                 'fighter_name': fighter.name,
                 'fighter_hp': fighter.maxhp,
                 'fighter_mana': fighter.mana,
@@ -226,8 +227,8 @@ class odooarena_arena(models.Model):
             self.player_mana = player.mana
         if self.player_mana < 0:
             self.player_mana = 0
-        if self.player_crit_chance > 100:
-            self.player_crit_chance = 100
+        if self.player_crit_chance > 1:
+            self.player_crit_chance = 1
         if self.player_crit_chance < 0:
             self.player_crit_chance = 0
         if self.player_armor < 0:
@@ -236,8 +237,8 @@ class odooarena_arena(models.Model):
             self.fighter_mana = fighter.mana
         if self.fighter_mana < 0:
             self.fighter_mana = 0
-        if self.fighter_crit_chance > 100:
-            self.fighter_crit_chance = 100
+        if self.fighter_crit_chance > 1:
+            self.fighter_crit_chance = 1
         if self.fighter_crit_chance < 0:
             self.fighter_crit_chance = 0
         if self.fighter_armor < 0:
@@ -267,6 +268,8 @@ class odooarena_arena(models.Model):
         fighter_damage = (randint(self.fighter_mindamage, self.fighter_maxdamage) - self.player_armor) * damage_modifier
         combat_log = "\nFighter has dealt %d damage back"
         fighter_damage, combat_log = self.update_if_fighter_crit(fighter_damage, combat_log)
+        if fighter_damage < 0:
+            fighter_damage = 0  # to prevent "healing" when player armor is greater than fighter damage (negatives adds hp)
         log = {
             'damage': fighter_damage,
             'combat_log': combat_log % fighter_damage,
@@ -307,6 +310,8 @@ class odooarena_arena(models.Model):
         fighter_damage = (randint(skill.min_change_to_hp, skill.max_change_to_hp) - self.player_armor) * damage_modifier
         combat_log = "\nFighter " + skill.log_text
         fighter_damage, combat_log = self.update_if_fighter_crit(fighter_damage, combat_log)
+        if fighter_damage < 0:
+            fighter_damage = 0
         log = {
             'damage': fighter_damage,
             'combat_log': combat_log % fighter_damage,
@@ -336,7 +341,7 @@ class odooarena_arena(models.Model):
         player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
         fighter = self.env['odooarena.fighter'].search([('fighting', '=', True)])
         fighter.fighting = False
-        next_fighter = self.env['odooarena.fighter'].search([('id', '=', fighter.level+1)])
+        next_fighter = self.env['odooarena.fighter'].search([('level', '=', fighter.level+1)])
         try:
             next_fighter.fighting = True
         except ValueError:
