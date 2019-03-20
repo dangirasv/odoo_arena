@@ -25,8 +25,8 @@
                                     <field name="mana" readonly="True"/>
                                     <field name="mindamage" readonly="True"/>
                                     <field name="maxdamage" readonly="True"/>
-                                    <field name="armor" help="Shows how much damage is prevented after each attack"/>
-                                    <field name="crit_chance" help="A percentage of a chance to do double damage" widget="percentage"/>
+                                    <field name="armor" help="Shows how much damage is prevented after each attack" readonly="True"/>
+                                    <field name="crit_chance" help="A percentage of a chance to do double damage" widget="percentage" readonly="True"/>
                                 </group>
                             </group>
                         </div>
@@ -52,7 +52,7 @@
             <field name="model">odooarena.fighter</field>
             <field name="arch" type="xml">
                 <form string="Character Screen">
-                    <div id="container" style="width:100%;">
+                    <div id="container" style="width:100%;" class="oe_read_only">
                         <div id="left" style="float:left; width:35%;">
                             <field name='image' widget="image" options='{"size": [400, 550]}' class="oe_right"/>
                         </div>
@@ -106,34 +106,42 @@
             </field>
         </record>
 
-
         <record model="ir.ui.view" id="arena_form_view">
             <field name="name">Arena</field>
             <field name="model">odooarena.arena</field>
             <field name="arch" type="xml">
                 <form string="Arena">
+
                     <center attrs="{'invisible': ['|', ('started', '=', False), '|', ('won', '=', True), ('lost', '=', True)]}">
-                        <group colspan="1" col="6" class="oe_center">
                         <button type="object" name="attack" string="Attack" help="Basic attack, dealing 8-12 damage"
                                 class="oe_highlight"/>
-                        <button type="object" name="pistol_shot" string="Pistol Shot" class="oe_link"
-                                help="Load your pistol with magic bullet and shoot at the target, dealing 10-20 damage. Costs 30 mana."/>
                         <button type="object" name="absorb" string="Absorb" class="oe_stat_button"
                                 help="Block 50% of received damage this turn and restore 40 mana"/>
-                        </group>
+                        <button type="object" name="pistol_shot" string="Pistol Shot" class="oe_stat_button"
+                                help="Load your pistol with magic bullet and shoot at the target, dealing 10-20 damage. Costs 30 mana."/>
+                        <button type="object" name="charge" string="Charge" class="oe_stat_button" attrs="{'invisible': [('fighter_level', '&lt;', '3')]}"
+                                help="Charge your opponent, dealing 10 to 15 damage and slightly stunning him, reducing his critical chance by 5%. Costs 30 mana."/>
+                        <button type="object" name="mind_blast" string="Mind Blast" class="oe_stat_button" attrs="{'invisible': [('fighter_level', '&lt;', '4')]}"
+                                help="A psychic attack, that deals 14 to 16 damage and purges 20 mana from the opponent. Costs 30 mana."/>
+                        <button type="object" name="sundering_shot" string="Sundering Shot" class="oe_highlight" attrs="{'invisible': [('fighter_level', '&lt;', '2')]}"
+                                help="An exceptionally strong shot, that deals 30 damage and removed 2 armor points from the target. Costs 50 mana."/>
+                        <button type="object" name="backstab" string="Backstab" class="oe_highlight" attrs="{'invisible': [('fighter_level', '&lt;', '5')]}"
+                                help="Deals 30 to 50 damage and lowers targets basic attack by 3 points. Costs 50 mana."/>
+
                     </center>
                     <group>
                     <div id="container" style="width:100%;" attrs="{'invisible': [('started', '=', False)]}">
                         <div id="left" style="float:left; width:50%;">
                             <div id="leftcontainer" style="width:100%;">
                                 <div id="leftleft" style="float:left; width:35%;">
-                                    <field name='fighter_image' widget="image" options='{"size": [210, 290]}' class="oe_right"/>
+                                    <field name='fighter_image' widget="image" options='{"size": [210, 290]}' class="oe_right" readonly="True"/>
                                 </div>
                                 <div id="leftright" style="float:right; width:65%;">
                                     <group colspan="4">
                                         <group colspan="2" col="2">
                                             <separator string="Fighter Info" colspan="2"/>
-                                            <field name="fighter_name"/>
+                                            <field name="fighter" readonly="True"/>
+                                            <field name="fighter_level" invisible="1"/>
                                         </group>
 
                                         <group colspan="2" col="2">
@@ -142,11 +150,11 @@
                                             <field name="won" invisible="1"/>
                                             <field name="lost" invisible="1"/>
                                             <field name="fighter_hp" widget="progressbar" decoration-danger="fighter_hp&lt;1"
-                                            decoration-success="fighter_hp&gt;50" decoration-warning ="fighter_hp&lt;51"/>
+                                            decoration-success="fighter_hp&gt;50" decoration-warning ="fighter_hp&lt;51" readonly="True"/>
                                             <field name="fighter_mana" widget="progressbar" decoration-danger="fighter_mana&lt;1"
-                                            decoration-info="fighter_mana&gt;0"/>
-                                            <field name="fighter_armor"/>
-                                            <field name="fighter_crit_chance" widget="percentage"/>
+                                            decoration-info="fighter_mana&gt;0" readonly="True"/>
+                                            <field name="fighter_armor" readonly="True"/>
+                                            <field name="fighter_crit_chance" widget="percentage" readonly="True"/>
                                         </group>
                                     </group>
                                 </div>
@@ -155,23 +163,23 @@
                         <div id="right" style="float:right; width:50%;">
                             <div id="rightcontainer" style="width:100%;">
                                 <div id="rightleft" style="float:left; width:35%;">
-                                    <field name='player_image' widget="image" options='{"size": [210, 290]}' class="oe_right"/>
+                                    <field name='player_image' widget="image" options='{"size": [210, 290]}' class="oe_right" readonly="True"/>
                                 </div>
                                 <div id="rightright" style="float:right; width:65%;">
                                     <group colspan="4">
                                         <group colspan="2" col="2">
                                             <separator string="Player Info" colspan="2"/>
-                                            <field name="player_name"/>
+                                            <field name="player_name" readonly="True"/>
                                         </group>
 
                                         <group colspan="2" col="2">
                                             <separator string="Player Status" colspan="2"/>
                                             <field name="player_hp" widget="progressbar" decoration-danger="player_hp&lt;1"
-                                            decoration-success="player_hp&gt;50" decoration-warning ="player_hp&lt;51"/>
+                                            decoration-success="player_hp&gt;50" decoration-warning ="player_hp&lt;51" readonly="True"/>
                                             <field name="player_mana" widget="progressbar" decoration-danger="player_mana&lt;1"
-                                            decoration-info="player_mana&gt;0"/>
-                                            <field name="player_armor"/>
-                                            <field name="player_crit_chance" widget="percentage"/>
+                                            decoration-info="player_mana&gt;0" readonly="True"/>
+                                            <field name="player_armor" readonly="True"/>
+                                            <field name="player_crit_chance" widget="percentage" readonly="True"/>
                                         </group>
                                     </group>
                                 </div>
@@ -180,7 +188,7 @@
                     </div>
                     </group>
                     <separator string="Combat Log" colspan="2" attrs="{'invisible': [('started', '=', False)]}"/>
-                            <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}"/>
+                            <field name="combat_log" attrs="{'invisible': [('started', '=', False)]}" readonly="True"/>
                     <div attrs="{'invisible': [('lost', '!=', True)]}">
                         <center>
                             <h2>
@@ -193,7 +201,7 @@
                     </div>
                     <div attrs="{'invisible': [('won', '!=', True)]}">
                         <center>
-                            <h2>You've won!<p>Please choose an item as a reward.</p></h2>
+                            <h2>You've won! You have unlocked a new skill!<p>Please choose an item as a reward.</p></h2>
                             <div id="Rewards" style="width:60%;">
                                 <div id="rew_left" style="float:left; width:50%;">
                                     <field name="won" invisible="1"/>
@@ -217,7 +225,6 @@
                                     <button type="object" name="chose_item_2" string="Choose Item" class="oe_highlight"/>
                                 </div>
                             </div>
-
                         </center>
                     </div>
                     <footer attrs="{'invisible': [('started', '=', True)]}">
@@ -359,7 +366,7 @@
             <field name="name">Odoo Arena</field>
             <field name="res_model">odooarena.arena</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('fighter.fighting', '=', True)]</field>
+            <field name="domain">[('create_uid', '=', uid)]</field>
             <field name="help" type="html">
                 <h1>Welcome to the Arena!</h1>
                 <p class="oe_view_nocontent_smiling_face">Please click the "Create" and then "Save" buttons to initiate the fight</p>

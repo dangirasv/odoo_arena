@@ -24,8 +24,8 @@ class odooarena_character(models.Model):
     maxdamage = fields.Integer("Max Damage", default=12)
     image = fields.Binary("Image")
     level = fields.Integer("Character Level", default=1)
-    armor = fields.Integer("Armor Points", default=2)
-    crit_chance = fields.Float("Critical Damage Chance", default=0.1)
+    armor = fields.Integer("Armor Points", default=3)
+    crit_chance = fields.Float("Critical Damage Chance", default=0.15)
 
 
 class odooarena_player(models.Model):
@@ -105,6 +105,7 @@ class odooarena_arena(models.Model):
     reward_name_2 = fields.Char(related='fighter.drops_item_2.name', string="Second reward's name")
     reward_img_2 = fields.Binary(related='fighter.drops_item_2.image', string="Second reward's image")
     reward_desc_2 = fields.Text(related='fighter.drops_item_2.description', string="Second reward's description")
+    fighter_level = fields.Integer(related='fighter.level')
 
     fighter_name = fields.Char("Fighter Name")
     fighter_hp = fields.Integer("Fighter Health Points")
@@ -157,27 +158,50 @@ class odooarena_arena(models.Model):
     """ PLAYER ACTIONS """
 
     def attack(self):
-        if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]) or self.player_hp <= 0:
-            self.started = False
-        else:
-            player_damage = randint(self.player_mindamage, self.player_maxdamage) - self.fighter_armor
-            combat_log = "Player has dealt %d damage to the fighter"
-            player_damage, combat_log = self.update_if_player_crit(player_damage, combat_log)
-            log = {
-                'damage': player_damage,
-                'combat_log': combat_log % player_damage,
-            }
-            self.fighter_reactions_and_log(log, 1)
-            self.death_checks()
+        player_damage = randint(self.player_mindamage, self.player_maxdamage) - self.fighter_armor
+        combat_log = "Player has dealt %d damage to the fighter"
+        player_damage, combat_log = self.update_if_player_crit(player_damage, combat_log)
+        log = {
+            'damage': player_damage,
+            'combat_log': combat_log % player_damage,
+        }
+        self.fighter_reactions_and_log(log, 1)
+        self.death_checks()
+
+    def absorb(self):
+        self.player_mana += 40
+        log = {
+            'damage': 0,
+            'combat_log': "Player absorbs 50% of the damage received this turn and restores 40 mana",
+        }
+        self.fighter_reactions_and_log(log, 0.5)
+        self.death_checks()
 
     def pistol_shot(self):
-        if not self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)]) or self.player_hp <= 0:
-            self.started = False
-        elif self.player_mana < 30:
+        skill = self.env['odooarena.skills'].search([('name', '=', 'Pistol Shot')])
+        self.check_mana_and_compile_damage_log(skill)
+
+    def sundering_shot(self):
+        skill = self.env['odooarena.skills'].search([('name', '=', 'Sundering Shot')])
+        self.check_mana_and_compile_damage_log(skill)
+
+    def charge(self):
+        skill = self.env['odooarena.skills'].search([('name', '=', 'Charge')])
+        self.check_mana_and_compile_damage_log(skill)
+
+    def mind_blast(self):
+        skill = self.env['odooarena.skills'].search([('name', '=', 'Mind Blast')])
+        self.check_mana_and_compile_damage_log(skill)
+
+    def backstab(self):
+        skill = self.env['odooarena.skills'].search([('name', '=', 'Backstab')])
+        self.check_mana_and_compile_damage_log(skill)
+
+    def check_mana_and_compile_damage_log(self, skill):
+        if self.player_mana < skill.mana_cost:
             raise Warning("You don't have enough mana to use this skill")
         else:
-            self.player_mana -= 30
-            skill = self.env['odooarena.skills'].search([('id', '=', 3)])
+            self.apply_mana_and_status_changes(skill)
             player_damage = randint(skill.min_change_to_hp, skill.max_change_to_hp) - self.fighter_armor
             player_damage, combat_log = self.update_if_player_crit(player_damage, skill.log_text)
             log = {
@@ -187,18 +211,15 @@ class odooarena_arena(models.Model):
             self.fighter_reactions_and_log(log, 1)
             self.death_checks()
 
-    def absorb(self):
-        player = self.env['odooarena.player'].search([('creator_id', '=', self.env.user.id)])
-        if not player or self.player_hp <= 0:
-            self.started = False
-        else:
-            self.player_mana += 40
-            log = {
-                'damage': 0,
-                'combat_log': "Player absorbs 50% of the damage received this turn and restores 40 mana",
-            }
-            self.fighter_reactions_and_log(log, 0.5)
-            self.death_checks()
+    def apply_mana_and_status_changes(self, skill):
+        self.write({
+            'player_mana': self.player_mana - skill.mana_cost,
+            'fighter_mana': self.fighter_mana - skill.min_change_to_mana,
+            'fighter_armor': self.fighter_armor - skill.change_to_armor,
+            'fighter_crit_chance': self.fighter_crit_chance - skill.change_to_crit,
+            'fighter_mindamage': self.fighter_mindamage - skill.change_to_damage,
+            'fighter_maxdamage': self.fighter_maxdamage - skill.change_to_damage,
+        })
 
     def fighter_reactions_and_log(self, log, damage_modifier):
         info = {
